@@ -1,0 +1,10 @@
+node_modules
+dist
+.vscode
+.idea
+.DS_Store
+*.local
+.env
+.run-dev.wsl.sh
+.run-dev.wsl.*.sh
+.tools
