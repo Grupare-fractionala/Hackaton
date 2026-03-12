@@ -1,4 +1,4 @@
-# Portal Intern Primarie - Frontend
+﻿# Portal Intern Primarie - Frontend
 
 Aplicatie React + Vite pentru suport intern in institutie:
 - autentificare angajati
@@ -16,36 +16,40 @@ Aplicatie React + Vite pentru suport intern in institutie:
 - Tailwind CSS
 
 ## Rulare locala
+Prerechizite comune:
+- Node.js 20+
+- `npm`
+- copiaza `.env.example` in `.env`
+
+### Windows
 1. Instaleaza Node.js 20+.
-2. Ruleaza:
+2. Din PowerShell, in folderul proiectului, ruleaza:
    - `npm install`
    - `npm run dev`
-
-## Deploy live pe GitHub Pages (frontend 24/7)
-1. Urca proiectul pe GitHub in branch-ul `main`.
-2. In repo: `Settings -> Pages -> Build and deployment` si selecteaza `GitHub Actions`.
-3. Workflow-ul `deploy-pages.yml` va rula automat la fiecare push pe `main`.
-4. Link-ul live va fi de forma:
-   - `https://<user>.github.io/<repo>/`
-
-Comenzi utile local:
-- `npm run build:pages` (genereaza build + fallback `404.html` pentru rute SPA)
-
-## Rulare pe statii cu politici stricte (App Control)
-Daca Windows blocheaza Vite/Rollup (mesaj de tip `Application Control policy has blocked this file`), ruleaza prin WSL:
-
-1. Asigura-te ca ai Ubuntu + nvm in WSL si Node 20 (`nvm install 20`).
-2. Din PowerShell, in folderul proiectului:
-   - `.\run-dev.cmd`
 3. Deschide:
    - `http://localhost:5173`
 
-Optiuni utile:
+Daca Windows blocheaza Vite/Rollup (mesaj de tip `Application Control policy has blocked this file`), foloseste fallback prin WSL:
+
+1. Activeaza `WSL2` si instaleaza `Ubuntu`.
+2. In Ubuntu, instaleaza `nvm` si Node 20 (`nvm install 20`).
+3. Din PowerShell, in folderul proiectului, ruleaza:
+   - `.\run-dev.cmd`
+4. Deschide:
+   - `http://localhost:5173`
+
+Optiuni utile pentru fallback-ul WSL:
 - `.\run-dev.cmd -SkipInstall` (nu mai ruleaza `npm install`)
 - `.\run-dev.cmd -Port 5174`
-
-Daca preferi direct scriptul `.ps1`:
 - `powershell -NoProfile -ExecutionPolicy Bypass -File .\run-dev.ps1 -SkipInstall`
+
+### Linux
+1. Instaleaza Node.js 20+ (direct sau prin `nvm`).
+2. In folderul proiectului, ruleaza:
+   - `npm install`
+   - `npm run dev`
+3. Deschide:
+   - `http://localhost:5173`
 
 ## Conturi demo (mock)
 - `secretara@primarie.local` / `Secretara123!` (angajat)
@@ -74,4 +78,4 @@ Pentru integrare backend real:
 - filtre dupa departament, categorie si cautare text
 
 ## Nota importanta despre backend/chatbox
-GitHub Pages hosteaza doar frontend static. Pentru backend/chatbox live 24/7 foloseste separat un serviciu de backend (ex: Render, Railway, Fly.io, VPS), apoi conecteaza frontend-ul prin `VITE_API_BASE_URL`.
+Aplicatia poate rula local doar ca frontend. Pentru integrare cu backend/chatbox real, foloseste un serviciu de backend separat si conecteaza frontend-ul prin `VITE_API_BASE_URL`.
