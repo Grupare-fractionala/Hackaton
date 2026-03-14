@@ -1,0 +1,12 @@
+# Secrete (Extrem de important!)
+.streamlit/secrets.toml
+.env
+
+# Cache Python (Fisiere generate automat de Python care nu trebuie urcate)
+__pycache__/
+*.pyc
+
+# Medii virtuale (Daca un coleg isi face unul local in acest folder)
+venv/
+env/
+.venv/
