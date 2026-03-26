@@ -1,23 +1,43 @@
-import { apiClient } from "@/api/axios";
-import { mockApi } from "@/api/mock/mockServer";
+import { supabase } from "@/supabaseClient";
 
-const useMock = import.meta.env.VITE_USE_MOCK !== "false";
+export async function login({ email, password }) {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
 
-export async function login(payload) {
-  if (useMock) {
-    return mockApi.auth.login(payload);
+  if (error) {
+    throw error;
   }
 
-  const response = await apiClient.post("/auth/login", payload);
-  return response.data;
+  return {
+    user: data.user,
+    token: data.session?.access_token,
+  };
+}
+
+export async function register({ email, password }) {
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  return {
+    user: data.user,
+    token: data.session?.access_token,
+  };
 }
 
 export async function getCurrentUser() {
-  if (useMock) {
-    const token = localStorage.getItem("token");
-    return mockApi.auth.me(token);
+  const { data: { user }, error } = await supabase.auth.getUser();
+
+  if (error) {
+    throw error;
   }
 
-  const response = await apiClient.get("/auth/me");
-  return response.data;
+  return user;
 }

@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { login } from "@/features/auth/api/authApi";
+import { login, register } from "@/features/auth/api/authApi";
 import { useAuthStore } from "@/store/useAuthStore";
 
 export function useLogin() {
@@ -7,8 +7,17 @@ export function useLogin() {
 
   return useMutation({
     mutationFn: login,
-    onSuccess: (data) => {
-      setSession(data);
+    onSuccess: () => {
+      // Session management is handled by Supabase listener or store update if needed.
+    },
+  });
+}
+
+export function useRegister() {
+  return useMutation({
+    mutationFn: register,
+    onSuccess: () => {
+      // Session management is handled by Supabase listener.
     },
   });
 }

@@ -72,7 +72,7 @@ export function LoginForm() {
 
         {loginMutation.isError ? (
           <div className="rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700">
-            {loginMutation.error?.response?.data?.message || "Autentificare esuata"}
+            {loginMutation.error?.message || "Autentificare esuata"}
           </div>
         ) : null}
 

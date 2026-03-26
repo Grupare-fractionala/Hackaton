@@ -1,6 +1,11 @@
+import { useState } from "react";
 import { LoginForm } from "@/features/auth/components/LoginForm";
+import { RegisterForm } from "@/features/auth/components/RegisterForm";
+import { Button } from "@/components/ui/Button";
 
 export function LoginPage() {
+  const [isLogin, setIsLogin] = useState(true);
+
   return (
     <div className="mx-auto flex min-h-[100dvh] w-full max-w-[1200px] items-start p-4 sm:p-5 md:items-center md:p-6">
       <div className="grid w-full items-center gap-6 lg:grid-cols-[1.1fr_0.9fr]">
@@ -30,8 +35,22 @@ export function LoginPage() {
           </div>
         </section>
 
-        <div className="flex justify-center lg:justify-end">
-          <LoginForm />
+        <div className="flex flex-col items-center justify-center lg:items-end">
+          {isLogin ? <LoginForm /> : <RegisterForm />}
+          
+          <div className="mt-4 text-center lg:text-right">
+            <p className="text-sm text-slate-600">
+              {isLogin ? "Nu ai un cont?" : "Ai deja un cont?"}{" "}
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="font-semibold text-brand-700 hover:text-brand-800 p-0"
+                onClick={() => setIsLogin(!isLogin)}
+              >
+                {isLogin ? "Creeaza un cont" : "Autentifica-te"}
+              </Button>
+            </p>
+          </div>
         </div>
       </div>
     </div>
