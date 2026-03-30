@@ -1,8 +1,3 @@
-import { apiClient } from "@/api/axios";
-import { mockApi } from "@/api/mock/mockServer";
-
-const useMock = import.meta.env.VITE_USE_MOCK !== "false";
-
 const FLOWISE_BASE_URL = import.meta.env.VITE_FLOWISE_BASE_URL || "http://localhost:3000";
 const FLOW_IDS = {
   clasificare: import.meta.env.VITE_FLOWISE_CLASSIFICATION_ID,
@@ -98,12 +93,5 @@ async function sendViaFlowise({ message }) {
 }
 
 export async function sendChatMessage(payload) {
-  const response = await apiClient.post("/chat/message", payload);
-  return response.data;
-  if (useMock) {
-    const token = localStorage.getItem("token");
-    return mockApi.chat.ask({ token, ...payload });
-  }
-
   return sendViaFlowise(payload);
 }
