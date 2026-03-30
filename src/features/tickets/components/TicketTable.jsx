@@ -93,7 +93,7 @@ export function TicketTable({ tickets, currentUser, onRespond, isResponding }) {
                 <Badge variant={priorityVariant(ticket.priority)}>{ticket.priority}</Badge>
               </div>
 
-              <p className="mt-3 text-xs text-slate-500">{formatDateTime(ticket.createdAt)}</p>
+              <p className="mt-3 text-xs text-slate-500">{formatDateTime(ticket.created_at || ticket.createdAt)}</p>
               <p className="mt-1 text-xs text-slate-500">Sursa: {ticket.source}</p>
               {ticket.lastResponse ? (
                 <p className="mt-2 rounded-lg bg-slate-100 px-2 py-1 text-xs text-slate-700">
@@ -242,7 +242,7 @@ export function TicketTable({ tickets, currentUser, onRespond, isResponding }) {
                       <Badge variant={statusVariant(ticket.status)}>{ticket.status}</Badge>
                     </td>
                     <td className="px-3 py-3 text-slate-600 lg:px-4">
-                      {formatDateTime(ticket.createdAt)}
+                      {formatDateTime(ticket.created_at || ticket.createdAt)}
                     </td>
                     <td className="hidden px-3 py-3 text-slate-600 2xl:table-cell lg:px-4">{ticket.source}</td>
                   </tr>

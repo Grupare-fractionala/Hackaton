@@ -79,3 +79,30 @@ Pentru integrare backend real:
 
 ## Nota importanta despre backend/chatbox
 Aplicatia poate rula local doar ca frontend. Pentru integrare cu backend/chatbox real, foloseste un serviciu de backend separat si conecteaza frontend-ul prin `VITE_API_BASE_URL`.
+
+## Testing
+
+This project uses [Vitest](https://vitest.dev/) for unit testing.
+
+### Running Tests
+
+To run all tests once:
+```bash
+npm test
+```
+
+To run tests in watch mode:
+```bash
+npx vitest
+```
+
+### Coverage
+
+To generate a coverage report:
+```bash
+npx vitest run --coverage
+```
+
+The tests cover the following areas:
+- `TicketToDatabase`: Logic for direct Supabase insertion.
+- `ticketApi`: Integration between Supabase, mock server, and fallback API client.
