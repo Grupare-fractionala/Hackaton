@@ -1,108 +1,145 @@
-﻿# Portal Intern Primarie - Frontend
+# Municipal Internal Support Portal
 
-Aplicatie React + Vite pentru suport intern in institutie:
-- autentificare angajati
-- chat AI intern (tehnic / HR / legislativ)
-- escalare automata in tichet daca AI nu poate rezolva
-- management tichete
-- categorie Documente interne (upload + filtrare pe departament)
+A hackathon project — an AI-powered internal support portal for a Romanian municipality. Combines an employee-facing AI chatbot with ticket management and an internal document knowledge base.
 
-## Stack
-- React + Vite
-- React Router v6 (`createBrowserRouter`)
-- Axios + interceptori
-- TanStack Query
-- Zustand
-- Tailwind CSS
+---
 
-## Rulare locala
-Prerechizite comune:
+## Features
+
+- **AI Chatbot** — Answers employee questions on technical, HR, and legislative topics using a Flowise-backed LLM pipeline
+- **Auto-escalation** — If the AI cannot resolve a query, it automatically creates a support ticket routed to the appropriate department
+- **Ticket Management** — Full CRUD for support tickets with department routing, status tracking, and operator views
+- **Document Knowledge Base** — Internal document upload and filtering by department and category
+- **Role-based Access** — Employee, department operator, and global admin roles with route protection
+
+---
+
+## Tech Stack
+
+| Layer | Tools |
+|-------|-------|
+| Frontend | React 19, Vite, JavaScript |
+| Routing | React Router v6 |
+| State | Zustand |
+| Data Fetching | TanStack Query, Axios (with interceptors) |
+| Styling | Tailwind CSS |
+| Backend / DB | Supabase (PostgreSQL, Auth, Storage) |
+| Chatbot | Streamlit + Flowise (Google Gemini) |
+| Testing | Vitest, React Testing Library |
+
+---
+
+## Getting Started
+
+### Prerequisites
+
 - Node.js 20+
-- `npm`
-- copiaza `.env.example` in `.env`
+- A Supabase project (or use mock mode — see below)
 
-### Windows
-1. Instaleaza Node.js 20+.
-2. Din PowerShell, in folderul proiectului, ruleaza:
-   - `npm install`
-   - `npm run dev`
-3. Deschide:
-   - `http://localhost:5173`
+### 1. Clone and install
 
-Daca Windows blocheaza Vite/Rollup (mesaj de tip `Application Control policy has blocked this file`), foloseste fallback prin WSL:
+```bash
+git clone https://github.com/your-username/Hackaton.git
+cd Hackaton
+npm install
+```
 
-1. Activeaza `WSL2` si instaleaza `Ubuntu`.
-2. In Ubuntu, instaleaza `nvm` si Node 20 (`nvm install 20`).
-3. Din PowerShell, in folderul proiectului, ruleaza:
-   - `.\run-dev.cmd`
-4. Deschide:
-   - `http://localhost:5173`
+### 2. Configure environment
 
-Optiuni utile pentru fallback-ul WSL:
-- `.\run-dev.cmd -SkipInstall` (nu mai ruleaza `npm install`)
-- `.\run-dev.cmd -Port 5174`
-- `powershell -NoProfile -ExecutionPolicy Bypass -File .\run-dev.ps1 -SkipInstall`
+```bash
+cp .env.example .env
+```
 
-### Linux
-1. Instaleaza Node.js 20+ (direct sau prin `nvm`).
-2. In folderul proiectului, ruleaza:
-   - `npm install`
-   - `npm run dev`
-3. Deschide:
-   - `http://localhost:5173`
+Edit `.env`:
 
-## Conturi demo (mock)
-- `secretara@primarie.local` / `Secretara123!` (angajat)
-- `tehnic@primarie.local` / `Tehnic123!` (operator departament Tehnic)
-- `hr@primarie.local` / `Hr123456!` (operator departament HR)
-- `administrativ@primarie.local` / `AdminDep123!` (operator departament Administrativ)
-- `admin@primarie.local` / `Admin123!` (admin global)
+```env
+VITE_USE_MOCK=true          # Run fully on local mocks (no backend needed)
+VITE_API_BASE_URL=...       # Set when connecting to a real backend
+VITE_SUPABASE_URL=...
+VITE_SUPABASE_ANON_KEY=...
+```
 
-## Config
-Copiaza `.env.example` in `.env`.
+### 3. Run
 
-`VITE_USE_MOCK=true` ruleaza complet pe mock local pana e gata backend-ul.
+```bash
+npm run dev
+```
 
-Pentru integrare backend real:
-- `VITE_USE_MOCK=false`
-- `VITE_API_BASE_URL=https://api-domeniul-tau.ro/api`
+Open `http://localhost:5173`.
 
-## Rutare tichete
-- `Tehnic` -> `Departament Tehnic`
-- `HR` -> `Departament HR`
-- `Legislativ` (si general) -> `Departament Administrativ`
+**Mock mode** (`VITE_USE_MOCK=true`) runs entirely on local mock data — no backend or Supabase needed. Useful for local development and demos.
 
-## Documente interne
-- pagina: `/documents` (compatibil si cu `/knowledge`)
-- upload documente pe departamente: `General`, `Tehnic`, `HR`, `Administrativ`
-- filtre dupa departament, categorie si cautare text
+---
 
-## Nota importanta despre backend/chatbox
-Aplicatia poate rula local doar ca frontend. Pentru integrare cu backend/chatbox real, foloseste un serviciu de backend separat si conecteaza frontend-ul prin `VITE_API_BASE_URL`.
+## Demo Accounts (mock mode)
 
-## Testing
+| Email | Password | Role |
+|-------|----------|------|
+| `secretara@primarie.local` | `Secretara123!` | Employee |
+| `tehnic@primarie.local` | `Tehnic123!` | Technical dept. operator |
+| `hr@primarie.local` | `Hr123456!` | HR dept. operator |
+| `administrativ@primarie.local` | `AdminDep123!` | Admin dept. operator |
+| `admin@primarie.local` | `Admin123!` | Global admin |
 
-This project uses [Vitest](https://vitest.dev/) for unit testing.
+---
 
-### Running Tests
+## Project Structure
 
-To run all tests once:
+```
+Hackaton/
+├── src/
+│   ├── features/
+│   │   ├── auth/       # Login, Register, ProtectedRoute
+│   │   ├── tickets/    # Ticket API, UI components, tests
+│   │   ├── documents/  # Document upload and filtering
+│   │   └── chatbot/    # Chat interface
+│   ├── api/            # Axios client with auth interceptors
+│   ├── store/          # Zustand state (auth, tickets)
+│   └── components/     # Shared UI components
+├── ai_chatbot/         # Streamlit + Flowise chatbot service
+│   ├── main.py
+│   └── requirements.txt
+└── scripts/            # Utility scripts
+```
+
+---
+
+## Ticket Routing
+
+| Topic | Routed to |
+|-------|-----------|
+| Technical | Technical Department |
+| HR | HR Department |
+| Legislative / General | Administrative Department |
+
+---
+
+## AI Chatbot Setup
+
+The chatbot runs as a separate Streamlit service:
+
+```bash
+cd ai_chatbot
+pip install -r requirements.txt
+streamlit run main.py
+```
+
+Configure credentials in `ai_chatbot/.streamlit/secrets.toml` (see `.streamlit/secrets.toml.example` if present). The chatbot connects to a Flowise endpoint and uses Google Gemini as the underlying model.
+
+---
+
+## Running Tests
+
 ```bash
 npm test
 ```
 
-To run tests in watch mode:
-```bash
-npx vitest
-```
-
-### Coverage
+Coverage areas:
+- `TicketToDatabase` — direct Supabase insertion logic
+- `ticketApi` — Supabase / mock server / fallback API client integration
 
 To generate a coverage report:
+
 ```bash
 npx vitest run --coverage
 ```
-
-The tests cover the following areas:
-- `TicketToDatabase`: Logic for direct Supabase insertion.
-- `ticketApi`: Integration between Supabase, mock server, and fallback API client.

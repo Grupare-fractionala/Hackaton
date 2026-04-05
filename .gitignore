@@ -9,3 +9,14 @@ dist
 .run-dev.wsl.*.sh
 .tools
 .streamlit
+
+# Python virtual environments
+ai_chatbot/chatbot_env/
+**/venv/
+**/env/
+**/.venv/
+
+# Python cache
+**/__pycache__/
+**/*.pyc
+**/*.pyo
