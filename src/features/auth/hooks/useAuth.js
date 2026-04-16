@@ -7,8 +7,8 @@ export function useLogin() {
 
   return useMutation({
     mutationFn: login,
-    onSuccess: () => {
-      // Session management is handled by Supabase listener or store update if needed.
+    onSuccess: (data) => {
+      setSession(data);
     },
   });
 }
