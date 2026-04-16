@@ -1,37 +1,45 @@
-import { addTicketToDB } from "./TicketToDatabase";
 import { supabase } from "@/supabaseClient";
+import { useAuthStore } from "@/store/useAuthStore";
+import { getAssignedDepartmentByCategory } from "@/features/tickets/utils/routing";
 
 export async function getTickets() {
-  // Try to fetch from Supabase
-  try {
-    const { data, error } = await supabase
-      .from("tickets")
-      .select("*")
-      .order("created_at", { ascending: false });
+  const { data, error } = await supabase
+    .from("tickets")
+    .select("*")
+    .order("created_at", { ascending: false });
 
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error("Error fetching tickets from Supabase:", error);
-    throw error;
-  }
+  if (error) throw error;
+  return data;
 }
 
 export async function createTicket(ticketData) {
-  // Use the direct Supabase integration
-  const userId = localStorage.getItem("userId"); 
-  const result = await addTicketToDB(
-    ticketData.subject,
-    ticketData.description,
-    ticketData.category || "Tehnic",
-    userId
-  );
+  const user = useAuthStore.getState().user;
+  const department = getAssignedDepartmentByCategory(ticketData.category);
 
-  if (result && result.length > 0) {
-    return result[0];
-  }
+  const { data, error } = await supabase
+    .from("tickets")
+    .insert([{
+      title: ticketData.subject,
+      subject: ticketData.subject,
+      description: ticketData.description,
+      category: ticketData.category || "Tehnic",
+      priority: ticketData.priority || "Medie",
+      department,
+      status: "Deschis",
+      source: ticketData.source || "manual",
+      user_id: user?.id || null,
+      requesterName: user?.name || user?.username || "Angajat",
+    }])
+    .select();
 
-  throw new Error("Failed to create ticket in Supabase");
+  if (error) throw error;
+  if (data && data.length > 0) return data[0];
+  throw new Error("Failed to create ticket");
+}
+
+export async function deleteTicket(ticketId) {
+  const { error } = await supabase.from("tickets").delete().eq("id", ticketId);
+  if (error) throw error;
 }
 
 export async function respondToTicket(payload) {

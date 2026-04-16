@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { formatDateTime } from "@/utils/date";
+import { formatDateTime, formatTicketId } from "@/utils/date";
 
 function statusVariant(status) {
   if (status === "Rezolvat") return "success";
@@ -30,7 +30,7 @@ function canManageTicket(currentUser, ticket) {
   if (currentUser.role === "agent") {
     return (
       Array.isArray(currentUser.handledDepartments) &&
-      currentUser.handledDepartments.includes(ticket.assignedDepartment)
+      currentUser.handledDepartments.includes(ticket.department)
     );
   }
 
@@ -80,7 +80,7 @@ export function TicketTable({ tickets, currentUser, onRespond, isResponding }) {
           {tickets.map((ticket) => (
             <Card key={ticket.id} className="p-4">
               <div className="flex items-start justify-between gap-2">
-                <p className="text-sm font-semibold text-slate-900">{ticket.id}</p>
+                <p className="text-sm font-semibold text-slate-900">{formatTicketId(ticket.id)}</p>
                 <Badge variant={statusVariant(ticket.status)}>{ticket.status}</Badge>
               </div>
 
@@ -88,7 +88,7 @@ export function TicketTable({ tickets, currentUser, onRespond, isResponding }) {
               <p className="mt-1 text-xs text-slate-500">{ticket.requesterName}</p>
 
               <div className="mt-3 flex flex-wrap gap-2">
-                <Badge variant="info">{ticket.assignedDepartment}</Badge>
+                <Badge variant="info">{ticket.department}</Badge>
                 <Badge variant="neutral">{ticket.category}</Badge>
                 <Badge variant={priorityVariant(ticket.priority)}>{ticket.priority}</Badge>
               </div>
@@ -174,7 +174,7 @@ export function TicketTable({ tickets, currentUser, onRespond, isResponding }) {
               <tbody className="divide-y divide-slate-100 bg-white/80">
                 {tickets.map((ticket) => (
                   <tr key={ticket.id}>
-                    <td className="px-3 py-3 font-semibold text-slate-900 lg:px-4">{ticket.id}</td>
+                    <td className="px-3 py-3 font-semibold text-slate-900 lg:px-4">{formatTicketId(ticket.id)}</td>
                     <td className="px-3 py-3 lg:px-4">
                       <p className="break-words font-medium text-slate-900">{ticket.subject}</p>
                       <p className="text-xs text-slate-500">{ticket.requesterName}</p>
@@ -233,7 +233,7 @@ export function TicketTable({ tickets, currentUser, onRespond, isResponding }) {
                         </div>
                       ) : null}
                     </td>
-                    <td className="px-3 py-3 text-slate-700 lg:px-4">{ticket.assignedDepartment}</td>
+                    <td className="px-3 py-3 text-slate-700 lg:px-4">{ticket.department}</td>
                     <td className="px-3 py-3 text-slate-700 lg:px-4">{ticket.category}</td>
                     <td className="px-3 py-3 lg:px-4">
                       <Badge variant={priorityVariant(ticket.priority)}>{ticket.priority}</Badge>

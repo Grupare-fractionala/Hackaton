@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { Navigate } from "react-router-dom";
+import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -70,7 +72,12 @@ function formatFileSize(bytes) {
 }
 
 export function KnowledgePage() {
+  const currentUser = useCurrentUser();
   const user = useAuthStore((state) => state.user);
+
+  if (currentUser && !currentUser.isAdmin) {
+    return <Navigate to="/" replace />;
+  }
   const documentsQuery = useDocumentsQuery();
   const createDocumentMutation = useCreateDocumentMutation();
 

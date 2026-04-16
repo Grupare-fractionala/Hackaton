@@ -1,10 +1,13 @@
 import { createBrowserRouter, redirect } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { ProtectedRoute } from "@/features/auth/components/ProtectedRoute";
+import { AdminPage } from "@/pages/AdminPage";
+import { AdminTicketsPage } from "@/pages/AdminTicketsPage";
 import { ChatPage } from "@/pages/ChatPage";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { KnowledgePage } from "@/pages/KnowledgePage";
 import { LoginPage } from "@/pages/LoginPage";
+import { NewTicketPage } from "@/pages/NewTicketPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { TicketsPage } from "@/pages/TicketsPage";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -58,12 +61,24 @@ export const router = createBrowserRouter(
           element: <TicketsPage />,
         },
         {
+          path: "tickets/new",
+          element: <NewTicketPage />,
+        },
+        {
           path: "documents",
           element: <KnowledgePage />,
         },
         {
           path: "knowledge",
           element: <KnowledgePage />,
+        },
+        {
+          path: "admin/users",
+          element: <AdminPage />,
+        },
+        {
+          path: "admin/tickets",
+          element: <AdminTicketsPage />,
         },
       ],
     },

@@ -1,201 +1,266 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Loader } from "@/components/ui/Loader";
 import { Select } from "@/components/ui/Select";
-import { TicketForm } from "@/features/tickets/components/TicketForm";
-import { TicketTable } from "@/features/tickets/components/TicketTable";
+import { TicketChatPanel } from "@/features/tickets/components/TicketChatPanel";
 import {
-  useCreateTicketMutation,
   useRespondToTicketMutation,
   useTicketsQuery,
 } from "@/features/tickets/hooks/useTickets";
+import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
 import { useAuthStore } from "@/store/useAuthStore";
+import { cn } from "@/utils/cn";
+import { formatTicketId } from "@/utils/date";
+
+function statusVariant(status) {
+  if (status === "Rezolvat") return "success";
+  if (status === "In lucru") return "warning";
+  if (status === "Deschis") return "info";
+  return "neutral";
+}
+
+function priorityVariant(priority) {
+  if (priority === "Ridicata") return "danger";
+  if (priority === "Medie") return "warning";
+  return "neutral";
+}
+
+function TicketRow({ ticket, onClick, onRespond, isResponding, canManage }) {
+  return (
+    <Card
+      className="cursor-pointer p-4 transition hover:shadow-md"
+      onClick={() => onClick(ticket)}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-semibold text-slate-500">{formatTicketId(ticket.id)}</span>
+            <Badge variant={statusVariant(ticket.status)}>{ticket.status}</Badge>
+            <Badge variant="info">{ticket.department}</Badge>
+          </div>
+          <p className="mt-1 font-semibold text-slate-900">{ticket.subject}</p>
+          {ticket.description ? (
+            <p className="mt-0.5 text-sm text-slate-500 line-clamp-1">{ticket.description}</p>
+          ) : null}
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            <Badge variant="neutral">{ticket.category}</Badge>
+            <Badge variant={priorityVariant(ticket.priority)}>{ticket.priority}</Badge>
+          </div>
+          <p className="mt-2 text-xs text-slate-400">
+            {ticket.requesterName} · Sursa: {ticket.source}
+          </p>
+        </div>
+      </div>
+
+      {canManage ? (
+        <div
+          className="mt-3 flex flex-wrap gap-2"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {ticket.status === "Deschis" ? (
+            <Button
+              size="sm"
+              onClick={() => onRespond({ ticketId: ticket.id, action: "take" })}
+              disabled={isResponding}
+            >
+              Preia
+            </Button>
+          ) : null}
+
+          {ticket.status !== "Rezolvat" ? (
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => onRespond({ ticketId: ticket.id, action: "resolve" })}
+              disabled={isResponding}
+            >
+              Marcheaza rezolvat
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => onRespond({ ticketId: ticket.id, action: "reopen" })}
+              disabled={isResponding}
+            >
+              Redeschide
+            </Button>
+          )}
+        </div>
+      ) : null}
+    </Card>
+  );
+}
 
 export function TicketsPage() {
-  const user = useAuthStore((state) => state.user);
+  const user = useCurrentUser();
+  const navigate = useNavigate();
   const ticketsQuery = useTicketsQuery();
-  const createTicketMutation = useCreateTicketMutation();
   const respondToTicketMutation = useRespondToTicketMutation();
 
-  const [filters, setFilters] = useState({
-    department: "Toate",
-    category: "Toate",
-    status: "Toate",
+  const [activeTab, setActiveTab] = useState(() => {
+    const role = useAuthStore.getState().user?.role || "employee";
+    return role.startsWith("agent_") ? "toResolve" : "myTickets";
   });
-  const [successId, setSuccessId] = useState("");
+  const [statusFilter, setStatusFilter] = useState("Toate");
+  const [selectedTicket, setSelectedTicket] = useState(null);
   const [updatedId, setUpdatedId] = useState("");
 
-  const tickets = ticketsQuery.data || [];
+  const allTickets = ticketsQuery.data || [];
 
-  const filteredTickets = useMemo(() => {
-    return tickets.filter((ticket) => {
-      const departmentOk =
-        filters.department === "Toate" || ticket.assignedDepartment === filters.department;
-      const categoryOk = filters.category === "Toate" || ticket.category === filters.category;
-      const statusOk = filters.status === "Toate" || ticket.status === filters.status;
-      return departmentOk && categoryOk && statusOk;
-    });
-  }, [tickets, filters.department, filters.category, filters.status]);
+  const myTickets = useMemo(
+    () => allTickets.filter((t) => t.user_id === user?.id),
+    [allTickets, user?.id],
+  );
 
-  const handleCreate = async (payload) => {
-    const created = await createTicketMutation.mutateAsync({
-      ...payload,
-      source: "manual",
-    });
-    setSuccessId(created.id);
-  };
+  const ticketsToResolve = useMemo(() => {
+    if (!user) return [];
+    if (user.role === "admin") return allTickets;
+    if (user.isAgent) {
+      return allTickets.filter((t) =>
+        user.handledDepartments.includes(t.department),
+      );
+    }
+    return [];
+  }, [allTickets, user]);
+
+  const isAgent = user?.isAgent;
+
+  const displayedTickets = useMemo(() => {
+    const base = activeTab === "myTickets" ? myTickets : ticketsToResolve;
+    return statusFilter === "Toate" ? base : base.filter((t) => t.status === statusFilter);
+  }, [activeTab, myTickets, ticketsToResolve, statusFilter]);
 
   const handleRespond = async (payload) => {
     try {
       const updated = await respondToTicketMutation.mutateAsync(payload);
-      setUpdatedId(updated.id);
-      return updated;
+      setUpdatedId(updated?.id || "");
     } catch {
-      return null;
+      // error shown below
     }
   };
 
-  const isAgent = user?.role === "agent";
-  const isEmployee = user?.role === "employee";
-  const pageSubtitle = isAgent
-    ? "Tichete nefinalizate de chatbot, repartizate departamentului tau."
-    : "Centralizare solicitari deschise de angajati sau generate din chat AI.";
+  const canManageTicket = (ticket) => {
+    if (!user || !ticket) return false;
+    if (user.isAgent) return user.handledDepartments.includes(ticket.department);
+    return false;
+  };
 
-  useEffect(() => {
-    if (!isAgent) {
-      return;
-    }
-
-    const firstDepartment = user?.handledDepartments?.[0];
-    if (!firstDepartment) {
-      return;
-    }
-
-    setFilters((prev) => ({ ...prev, department: firstDepartment }));
-  }, [isAgent, user?.handledDepartments]);
+  const tabs = [
+    { id: "myTickets", label: "Tichetele mele", count: myTickets.length },
+    ...(isAgent
+      ? [{ id: "toResolve", label: "Tichete de rezolvat", count: ticketsToResolve.length }]
+      : []),
+  ];
 
   return (
     <div className="space-y-4">
       <PageHeader
         title="Tichete"
-        subtitle={pageSubtitle}
+        subtitle="Gestioneaza solicitarile tale si cele repartizate departamentului tau."
         action={
-          <Badge variant="info" className="text-sm">
-            {filteredTickets.length} rezultate
-          </Badge>
+          <Button size="sm" onClick={() => navigate("/tickets/new")}>
+            + Creeaza tichet
+          </Button>
         }
       />
 
-      <div className={isAgent ? "grid gap-4" : "grid gap-4 2xl:grid-cols-[380px_minmax(0,1fr)]"}>
-        {!isAgent ? (
-          <div className="space-y-4">
-            <TicketForm onSubmit={handleCreate} isSubmitting={createTicketMutation.isPending} />
+      <div className="flex gap-1 rounded-xl bg-slate-100 p-1 w-fit">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => { setActiveTab(tab.id); setStatusFilter("Toate"); }}
+            className={cn(
+              "rounded-lg px-4 py-2 text-sm font-medium transition",
+              activeTab === tab.id
+                ? "bg-white text-slate-900 shadow-sm"
+                : "text-slate-600 hover:text-slate-900",
+            )}
+          >
+            {tab.label}
+            <span className="ml-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-slate-200 px-1 text-xs font-semibold text-slate-700">
+              {tab.count}
+            </span>
+          </button>
+        ))}
+      </div>
 
-            {successId ? (
-              <Card className="border border-emerald-200 bg-emerald-50 p-4">
-                <p className="text-sm font-medium text-emerald-800">Tichet creat cu succes: {successId}</p>
-                <Button variant="ghost" size="sm" className="mt-2" onClick={() => setSuccessId("")}>
-                  Ascunde
-                </Button>
-              </Card>
-            ) : null}
+      <div className="flex flex-wrap items-center gap-3">
+        <div>
+          <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Status
+          </label>
+          <Select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="w-40"
+          >
+            <option>Toate</option>
+            <option>Deschis</option>
+            <option>In lucru</option>
+            <option>Rezolvat</option>
+          </Select>
+        </div>
 
-            {isEmployee ? (
-              <Card className="border border-brand-200 bg-brand-50 p-4">
-                <p className="text-sm font-semibold text-brand-900">Flux escalare</p>
-                <p className="mt-1 text-sm text-brand-800">
-                  Daca AI nu rezolva, tichetul este trimis automat catre departamentul responsabil:
-                  Tehnic, HR sau Administrativ.
-                </p>
-              </Card>
-            ) : null}
-          </div>
-        ) : null}
+        <Badge variant="info" className="mt-4 text-sm self-end">
+          {displayedTickets.length} rezultate
+        </Badge>
+      </div>
 
-        <div className="min-w-0 space-y-4">
-          <Card className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Departament responsabil
-              </label>
-              <Select
-                value={filters.department}
-                onChange={(event) => setFilters((prev) => ({ ...prev, department: event.target.value }))}
-              >
-                <option>Toate</option>
-                <option>Tehnic</option>
-                <option>HR</option>
-                <option>Administrativ</option>
-              </Select>
-            </div>
+      {updatedId ? (
+        <Card className="border border-emerald-200 bg-emerald-50 p-4">
+          <p className="text-sm font-medium text-emerald-800">Tichet actualizat cu succes: {updatedId}</p>
+          <Button variant="ghost" size="sm" className="mt-2" onClick={() => setUpdatedId("")}>
+            Ascunde
+          </Button>
+        </Card>
+      ) : null}
 
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Categorie
-              </label>
-              <Select
-                value={filters.category}
-                onChange={(event) => setFilters((prev) => ({ ...prev, category: event.target.value }))}
-              >
-                <option>Toate</option>
-                <option>Tehnic</option>
-                <option>HR</option>
-                <option>Legislativ</option>
-              </Select>
-            </div>
+      {respondToTicketMutation.isError ? (
+        <Card className="border border-rose-200 bg-rose-50 p-4">
+          <p className="text-sm font-medium text-rose-700">
+            {respondToTicketMutation.error?.message || "Nu am putut actualiza tichetul."}
+          </p>
+        </Card>
+      ) : null}
 
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Status
-              </label>
-              <Select
-                value={filters.status}
-                onChange={(event) => setFilters((prev) => ({ ...prev, status: event.target.value }))}
-              >
-                <option>Toate</option>
-                <option>Deschis</option>
-                <option>In lucru</option>
-                <option>Rezolvat</option>
-              </Select>
-            </div>
-          </Card>
-
-          {updatedId ? (
-            <Card className="border border-emerald-200 bg-emerald-50 p-4">
-              <p className="text-sm font-medium text-emerald-800">Tichet actualizat cu succes: {updatedId}</p>
-              <Button variant="ghost" size="sm" className="mt-2" onClick={() => setUpdatedId("")}>
-                Ascunde
-              </Button>
-            </Card>
-          ) : null}
-
-          {respondToTicketMutation.isError ? (
-            <Card className="border border-rose-200 bg-rose-50 p-4">
-              <p className="text-sm font-medium text-rose-700">
-                {respondToTicketMutation.error?.response?.data?.message ||
-                  respondToTicketMutation.error?.message ||
-                  "Nu am putut actualiza tichetul."}
-              </p>
-            </Card>
-          ) : null}
-
-          {ticketsQuery.isLoading ? (
-            <Card>
-              <Loader label="Se incarca tichetele..." />
-            </Card>
-          ) : (
-            <TicketTable
-              tickets={filteredTickets}
-              currentUser={user}
+      {ticketsQuery.isLoading ? (
+        <Card>
+          <Loader label="Se incarca tichetele..." />
+        </Card>
+      ) : displayedTickets.length === 0 ? (
+        <Card className="p-8 text-center">
+          <p className="text-slate-500">
+            {activeTab === "myTickets"
+              ? "Nu ai niciun tichet inca. Apasa butonul Creeaza tichet pentru a deschide unul."
+              : "Nu exista tichete repartizate departamentului tau."}
+          </p>
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {displayedTickets.map((ticket) => (
+            <TicketRow
+              key={ticket.id}
+              ticket={ticket}
+              onClick={setSelectedTicket}
               onRespond={handleRespond}
               isResponding={respondToTicketMutation.isPending}
+              canManage={canManageTicket(ticket)}
             />
-          )}
+          ))}
         </div>
-      </div>
+      )}
+
+      {selectedTicket ? (
+        <TicketChatPanel
+          ticket={selectedTicket}
+          onClose={() => setSelectedTicket(null)}
+        />
+      ) : null}
     </div>
   );
 }

@@ -1,3 +1,8 @@
+export function formatTicketId(id) {
+  if (!id) return "—";
+  return `TKT-${id.replace(/-/g, "").slice(0, 6).toUpperCase()}`;
+}
+
 export function formatDateTime(value) {
   const date = new Date(value);
 

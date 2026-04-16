@@ -1,9 +1,8 @@
 import { Badge } from "@/components/ui/Badge";
-import { TicketActionCard } from "@/features/chat/components/TicketActionCard";
 import { formatDateTime } from "@/utils/date";
 import { cn } from "@/utils/cn";
 
-export function MessageBubble({ message, onCreateTicket }) {
+export function MessageBubble({ message }) {
   const isUser = message.role === "user";
 
   return (
@@ -26,10 +25,6 @@ export function MessageBubble({ message, onCreateTicket }) {
         ) : null}
 
         <p className="break-words leading-relaxed whitespace-pre-wrap">{message.content}</p>
-
-        {message.ticketSuggestion && onCreateTicket ? (
-          <TicketActionCard suggestion={message.ticketSuggestion} onCreateTicket={onCreateTicket} />
-        ) : null}
 
         <p className={cn("mt-2 text-[11px]", isUser ? "text-white/70" : "text-slate-500")}>
           {formatDateTime(message.createdAt)}
