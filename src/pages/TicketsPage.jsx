@@ -30,10 +30,11 @@ function priorityVariant(priority) {
 }
 
 function TicketRow({ ticket, onClick, onRespond, isResponding, canManage }) {
+  const canChat = ticket.status !== "Deschis";
   return (
     <Card
-      className="cursor-pointer p-4 transition hover:shadow-md"
-      onClick={() => onClick(ticket)}
+      className={cn("p-4 transition", canChat ? "cursor-pointer hover:shadow-md" : "")}
+      onClick={() => canChat && onClick(ticket)}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
@@ -139,6 +140,9 @@ export function TicketsPage() {
     try {
       const updated = await respondToTicketMutation.mutateAsync(payload);
       setUpdatedId(updated?.id || "");
+      if (payload.action === "take" && updated) {
+        setSelectedTicket(updated);
+      }
     } catch {
       // error shown below
     }
