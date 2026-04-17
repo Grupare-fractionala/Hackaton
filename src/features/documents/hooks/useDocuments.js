@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createDocument, getDocuments } from "@/features/documents/api/documentApi";
+import { createDocument, deleteDocument, getDocuments } from "@/features/documents/api/documentApi";
 import { useAuthStore } from "@/store/useAuthStore";
 
 const DOCUMENTS_QUERY_KEY = ["documents"];
@@ -23,7 +23,18 @@ export function useCreateDocumentMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: createDocument,
+    mutationFn: ({ file, department }) => createDocument(file, department),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: DOCUMENTS_QUERY_KEY });
+    },
+  });
+}
+
+export function useDeleteDocumentMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, fileUrl }) => deleteDocument(id, fileUrl),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: DOCUMENTS_QUERY_KEY });
     },
