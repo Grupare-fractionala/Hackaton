@@ -16,6 +16,7 @@ export function useTicketsQuery() {
     queryFn: getTickets,
     enabled: Boolean(token),
     refetchOnMount: "always",
+    refetchInterval: 5000,
   });
 }
 
