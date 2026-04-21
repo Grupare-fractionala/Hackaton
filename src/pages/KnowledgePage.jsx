@@ -10,12 +10,7 @@ import { Loader } from "@/components/ui/Loader";
 import { Select } from "@/components/ui/Select";
 import { Textarea } from "@/components/ui/Textarea";
 import { useCreateDocumentMutation, useDeleteDocumentMutation, useDocumentsQuery } from "@/features/documents/hooks/useDocuments";
-import {
-  DOCUMENT_CATEGORIES,
-  DOCUMENT_DEPARTMENTS,
-  GENERAL_DOCUMENT_DEPARTMENT,
-} from "@/features/documents/utils/constants";
-import { getAssignedDepartmentByCategory } from "@/features/tickets/utils/routing";
+import { DOCUMENT_DEPARTMENTS } from "@/features/documents/utils/constants";
 import { useAuthStore } from "@/store/useAuthStore";
 import { formatDateTime } from "@/utils/date";
 
@@ -73,25 +68,23 @@ export function KnowledgePage() {
   const createDocumentMutation = useCreateDocumentMutation();
   const deleteDocumentMutation = useDeleteDocumentMutation();
 
-  const employeeDepartment = getAssignedDepartmentByCategory(user?.department || "");
-
   const allowedDepartments = useMemo(() => {
     if (user?.role === "admin") {
       return DOCUMENT_DEPARTMENTS;
     }
 
     if (user?.role === "agent") {
-      const departments = [GENERAL_DOCUMENT_DEPARTMENT, ...(user?.handledDepartments || [])];
-      return Array.from(new Set(departments));
+      return Array.from(
+        new Set(DOCUMENT_DEPARTMENTS.filter((d) => (user?.handledDepartments || []).includes(d)))
+      );
     }
 
-    return Array.from(new Set([GENERAL_DOCUMENT_DEPARTMENT, employeeDepartment]));
-  }, [employeeDepartment, user?.handledDepartments, user?.role]);
+    return DOCUMENT_DEPARTMENTS;
+  }, [user?.handledDepartments, user?.role]);
 
   const [form, setForm] = useState({
     title: "",
-    category: DOCUMENT_CATEGORIES[0],
-    department: GENERAL_DOCUMENT_DEPARTMENT,
+    department: DOCUMENT_DEPARTMENTS[0],
     description: "",
     file: null,
   });
@@ -157,7 +150,6 @@ export function KnowledgePage() {
         file: form.file,
         department: form.department,
         title: form.title,
-        category: form.category,
         description: form.description,
       });
 
@@ -209,40 +201,21 @@ export function KnowledgePage() {
               />
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="document-department">
-                  Departament
-                </label>
-                <Select
-                  id="document-department"
-                  value={form.department}
-                  onChange={(event) => setForm((prev) => ({ ...prev, department: event.target.value }))}
-                >
-                  {allowedDepartments.map((department) => (
-                    <option key={department} value={department}>
-                      {department}
-                    </option>
-                  ))}
-                </Select>
-              </div>
-
-              <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="document-category">
-                  Categorie
-                </label>
-                <Select
-                  id="document-category"
-                  value={form.category}
-                  onChange={(event) => setForm((prev) => ({ ...prev, category: event.target.value }))}
-                >
-                  {DOCUMENT_CATEGORIES.map((category) => (
-                    <option key={category} value={category}>
-                      {category}
-                    </option>
-                  ))}
-                </Select>
-              </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="document-department">
+                Departament
+              </label>
+              <Select
+                id="document-department"
+                value={form.department}
+                onChange={(event) => setForm((prev) => ({ ...prev, department: event.target.value }))}
+              >
+                {allowedDepartments.map((department) => (
+                  <option key={department} value={department}>
+                    {department}
+                  </option>
+                ))}
+              </Select>
             </div>
 
             <div>

@@ -28,6 +28,20 @@ export default defineConfig({
       "@": fileURLToPath(new URL("./src", import.meta.url)),
     },
   },
+  server: {
+    proxy: {
+      "/flowise": {
+        target: "http://localhost:3000",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/flowise/, ""),
+      },
+      "/hf-api": {
+        target: "https://api-inference.huggingface.co",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/hf-api/, ""),
+      },
+    },
+  },
   test: {
     globals: true,
     environment: 'jsdom',

@@ -1,4 +1,4 @@
-const FLOWISE_BASE_URL = import.meta.env.VITE_FLOWISE_BASE_URL || "http://localhost:3000";
+const FLOWISE_BASE_URL = import.meta.env.VITE_FLOWISE_BASE_URL ? import.meta.env.VITE_FLOWISE_BASE_URL : "/flowise";
 const FLOW_IDS = {
   clasificare: import.meta.env.VITE_FLOWISE_CLASSIFICATION_ID,
   IT: import.meta.env.VITE_FLOWISE_IT_ID,
