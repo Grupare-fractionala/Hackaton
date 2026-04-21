@@ -1,8 +1,19 @@
 import { supabase } from "@/supabaseClient";
+import {
+  createMockTicket,
+  deleteMockTicket,
+  getMockTickets,
+  respondToMockTicket,
+} from "@/api/mockStore";
+import { isMockMode } from "@/config/env";
 import { useAuthStore } from "@/store/useAuthStore";
 import { getAssignedDepartmentByCategory } from "@/features/tickets/utils/routing";
 
 export async function getTickets() {
+  if (isMockMode) {
+    return getMockTickets();
+  }
+
   const { data, error } = await supabase
     .from("tickets")
     .select("*")
@@ -14,6 +25,11 @@ export async function getTickets() {
 
 export async function createTicket(ticketData) {
   const user = useAuthStore.getState().user;
+
+  if (isMockMode) {
+    return createMockTicket(ticketData, user);
+  }
+
   const department = getAssignedDepartmentByCategory(ticketData.category);
 
   const { data, error } = await supabase
@@ -38,11 +54,19 @@ export async function createTicket(ticketData) {
 }
 
 export async function deleteTicket(ticketId) {
+  if (isMockMode) {
+    return deleteMockTicket(ticketId);
+  }
+
   const { error } = await supabase.from("tickets").delete().eq("id", ticketId);
   if (error) throw error;
 }
 
 export async function respondToTicket(payload) {
+  if (isMockMode) {
+    return respondToMockTicket(payload);
+  }
+
   // Try to update in Supabase
   try {
     let status = "Deschis";

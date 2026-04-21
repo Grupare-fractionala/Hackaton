@@ -1,3 +1,5 @@
+import { isMockMode } from "@/config/env";
+
 const FLOWISE_BASE_URL = import.meta.env.VITE_FLOWISE_BASE_URL || "http://localhost:3000";
 const FLOW_IDS = {
   clasificare: import.meta.env.VITE_FLOWISE_CLASSIFICATION_ID,
@@ -93,5 +95,35 @@ async function sendViaFlowise({ message }) {
 }
 
 export async function sendChatMessage(payload) {
+  if (isMockMode) {
+    const text = String(payload.message || "").toLowerCase();
+    const category = text.includes("hr")
+      ? "HR"
+      : text.includes("legal") || text.includes("juridic") || text.includes("urbanism")
+        ? "Legislativ"
+        : text.includes("parola") || text.includes("imprimanta") || text.includes("calculator")
+          ? "Tehnic"
+          : "General";
+
+    const shouldCreateTicket = category !== "General";
+
+    return {
+      reply: shouldCreateTicket
+        ? `Am incadrat solicitarea la ${category}. Pentru demo local pot genera un tichet din conversatie.`
+        : "Sunt in modul demo local. Pot ajuta cu solicitari Tehnic, HR sau Legislativ si pot propune tichete.",
+      category,
+      resolved: false,
+      shouldCreateTicket,
+      suggestedTicket: shouldCreateTicket
+        ? {
+            category,
+            priority: "Medie",
+            subject: `Solicitare ${category}`,
+            description: payload.message,
+          }
+        : null,
+    };
+  }
+
   return sendViaFlowise(payload);
 }

@@ -1,5 +1,7 @@
 import { supabase } from "@/supabaseClient";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { createMockUser, deleteMockUser, getMockUsers } from "@/api/mockStore";
+import { isMockMode } from "@/config/env";
 
 export const ROLES = [
   { value: "employee", label: "Angajat" },
@@ -14,6 +16,10 @@ export function roleLabel(role) {
 }
 
 export async function getUsers() {
+  if (isMockMode) {
+    return getMockUsers();
+  }
+
   const { data, error } = await supabase
     .from("profiles")
     .select("*")
@@ -24,6 +30,10 @@ export async function getUsers() {
 }
 
 export async function createUser({ username, password, role, department }) {
+  if (isMockMode) {
+    return createMockUser({ username, password, role, department });
+  }
+
   const email = `${username}@primarie.local`;
 
   const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
@@ -47,6 +57,10 @@ export async function createUser({ username, password, role, department }) {
 }
 
 export async function deleteUser(userId) {
+  if (isMockMode) {
+    return deleteMockUser(userId);
+  }
+
   const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
   if (error) throw error;
 }
