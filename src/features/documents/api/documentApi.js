@@ -1,6 +1,12 @@
 import { supabase } from "@/supabaseClient";
+import { createMockDocument, deleteMockDocument, getMockDocuments } from "@/api/mockStore";
+import { isMockMode } from "@/config/env";
 
 export async function getDocuments() {
+  if (isMockMode) {
+    return getMockDocuments();
+  }
+
   const { data, error } = await supabase
     .from("documents")
     .select("*")
@@ -11,6 +17,10 @@ export async function getDocuments() {
 }
 
 export async function createDocument(file, department = "General") {
+  if (isMockMode) {
+    return createMockDocument(file, department);
+  }
+
   const filePath = `${Date.now()}_${file.name}`;
 
   const { error: storageError } = await supabase.storage
@@ -38,6 +48,10 @@ export async function createDocument(file, department = "General") {
 }
 
 export async function deleteDocument(id, fileUrl) {
+  if (isMockMode) {
+    return deleteMockDocument(id);
+  }
+
   // Extract storage path from the public URL
   const urlParts = fileUrl ? fileUrl.split("/company_documents/") : [];
   if (urlParts.length === 2) {

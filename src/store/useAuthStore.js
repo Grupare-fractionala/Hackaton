@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { isMockMode } from "@/config/env";
 
 const STORAGE_KEY = "primarie-auth";
 
@@ -21,8 +22,11 @@ export const useAuthStore = create(
         set({ user, token });
       },
       logout: async () => {
-        const { supabase } = await import("@/supabaseClient");
-        await supabase.auth.signOut();
+        if (!isMockMode) {
+          const { supabase } = await import("@/supabaseClient");
+          await supabase.auth.signOut();
+        }
+
         localStorage.removeItem("token");
         set({ user: null, token: null });
       },

@@ -3,6 +3,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { ProtectedRoute } from "@/features/auth/components/ProtectedRoute";
 import { AdminPage } from "@/pages/AdminPage";
 import { AdminTicketsPage } from "@/pages/AdminTicketsPage";
+import { AnnouncementsPage } from "@/pages/AnnouncementsPage";
 import { ChatPage } from "@/pages/ChatPage";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { KnowledgePage } from "@/pages/KnowledgePage";
@@ -59,6 +60,14 @@ export const router = createBrowserRouter(
         {
           path: "tickets",
           element: <TicketsPage />,
+        },
+        {
+          path: "announcements",
+          element: <AnnouncementsPage />,
+        },
+        {
+          path: "anunturi",
+          element: <AnnouncementsPage />,
         },
         {
           path: "tickets/new",
