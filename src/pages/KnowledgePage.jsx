@@ -46,16 +46,7 @@ const orientationSections = [
   },
 ];
 
-const searchFieldCandidates = ["file_name", "department"];
-
-function readFileAsDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result || ""));
-    reader.onerror = () => reject(new Error("Nu am putut citi fisierul selectat."));
-    reader.readAsDataURL(file);
-  });
-}
+const searchFieldCandidates = ["file_name", "department", "title", "description"];
 
 function formatFileSize(bytes) {
   const size = Number(bytes) || 0;
@@ -151,19 +142,6 @@ export function KnowledgePage() {
     });
   }, [documents, filters.department, filters.query]);
 
-  const handleDownload = (documentItem) => {
-    if (!documentItem.fileDataUrl) {
-      return;
-    }
-
-    const anchor = window.document.createElement("a");
-    anchor.href = documentItem.fileDataUrl;
-    anchor.download = documentItem.fileName || `${documentItem.title}.pdf`;
-    window.document.body.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
-  };
-
   const handleCreateDocument = async (event) => {
     event.preventDefault();
     setSuccessMessage("");
@@ -175,7 +153,13 @@ export function KnowledgePage() {
     }
 
     try {
-      await createDocumentMutation.mutateAsync({ file: form.file, department: form.department });
+      await createDocumentMutation.mutateAsync({
+        file: form.file,
+        department: form.department,
+        title: form.title,
+        category: form.category,
+        description: form.description,
+      });
 
       setSuccessMessage("Document incarcat cu succes.");
       setForm((prev) => ({
@@ -348,10 +332,22 @@ export function KnowledgePage() {
                 <div key={documentItem.id} className="rounded-xl border border-slate-200 bg-white/80 p-3">
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div>
-                      <p className="font-semibold text-slate-900">{documentItem.file_name}</p>
+                      <p className="font-semibold text-slate-900">
+                        {documentItem.title || documentItem.file_name}
+                      </p>
+                      <p className="text-xs text-slate-500">{documentItem.file_name}</p>
                     </div>
-                    <Badge variant="info">{documentItem.department}</Badge>
+                    <div className="flex flex-wrap gap-1">
+                      <Badge variant="info">{documentItem.department}</Badge>
+                      {documentItem.category ? (
+                        <Badge variant="neutral">{documentItem.category}</Badge>
+                      ) : null}
+                    </div>
                   </div>
+
+                  {documentItem.description ? (
+                    <p className="mt-2 text-sm text-slate-700">{documentItem.description}</p>
+                  ) : null}
 
                   <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
                     <p className="text-xs text-slate-500">

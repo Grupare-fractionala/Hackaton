@@ -10,7 +10,7 @@ export async function getDocuments() {
   return data;
 }
 
-export async function createDocument(file, department = "General") {
+export async function createDocument(file, department = "General", { title, category, description } = {}) {
   const filePath = `${Date.now()}_${file.name}`;
 
   const { error: storageError } = await supabase.storage
@@ -29,6 +29,9 @@ export async function createDocument(file, department = "General") {
       file_name: file.name,
       file_url: urlData.publicUrl,
       department,
+      title: title || file.name,
+      category: category || null,
+      description: description || null,
     }])
     .select()
     .single();
