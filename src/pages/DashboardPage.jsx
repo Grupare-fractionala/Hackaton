@@ -1,41 +1,34 @@
+import { useMemo } from "react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { Loader } from "@/components/ui/Loader";
+import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
 import { useTicketsQuery } from "@/features/tickets/hooks/useTickets";
-import { useAuthStore } from "@/store/useAuthStore";
-import { relativeDate } from "@/utils/date";
+import { formatTicketId, relativeDate } from "@/utils/date";
 
 function countByStatus(tickets, status) {
-  return tickets.filter((ticket) => ticket.status === status).length;
+  return tickets.filter((t) => t.status === status).length;
 }
 
 export function DashboardPage() {
-  const user = useAuthStore((state) => state.user);
+  const user = useCurrentUser();
   const ticketsQuery = useTicketsQuery();
-  const tickets = ticketsQuery.data || [];
+  const allTickets = ticketsQuery.data || [];
+
+  const tickets = useMemo(() => {
+    if (!user) return [];
+    if (user.isAgent) {
+      return allTickets.filter((t) => user.handledDepartments.includes(t.department));
+    }
+    return allTickets.filter((t) => t.user_id === user.id);
+  }, [allTickets, user]);
 
   const cards = [
-    {
-      label: "Total tichete",
-      value: tickets.length,
-      tone: "bg-brand-100 text-brand-900",
-    },
-    {
-      label: "Deschise",
-      value: countByStatus(tickets, "Deschis"),
-      tone: "bg-sky-100 text-sky-900",
-    },
-    {
-      label: "In lucru",
-      value: countByStatus(tickets, "In lucru"),
-      tone: "bg-amber-100 text-amber-900",
-    },
-    {
-      label: "Rezolvate",
-      value: countByStatus(tickets, "Rezolvat"),
-      tone: "bg-emerald-100 text-emerald-900",
-    },
+    { label: "Total tichete", value: tickets.length, tone: "bg-brand-100 text-brand-900" },
+    { label: "Deschise", value: countByStatus(tickets, "Deschis"), tone: "bg-sky-100 text-sky-900" },
+    { label: "In lucru", value: countByStatus(tickets, "In lucru"), tone: "bg-amber-100 text-amber-900" },
+    { label: "Rezolvate", value: countByStatus(tickets, "Rezolvat"), tone: "bg-emerald-100 text-emerald-900" },
   ];
 
   return (
@@ -49,9 +42,7 @@ export function DashboardPage() {
         {cards.map((card) => (
           <Card key={card.label} className="p-4">
             <p className="text-sm text-slate-600">{card.label}</p>
-            <p
-              className={`mt-2 inline-flex rounded-xl px-3 py-1 text-[clamp(1.25rem,1rem+1vw,1.7rem)] font-bold ${card.tone}`}
-            >
+            <p className={`mt-2 inline-flex rounded-xl px-3 py-1 text-[clamp(1.25rem,1rem+1vw,1.7rem)] font-bold ${card.tone}`}>
               {card.value}
             </p>
           </Card>
@@ -61,25 +52,24 @@ export function DashboardPage() {
       <section className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
         <Card>
           <h2 className="text-lg font-semibold text-slate-900">Solicitari recente</h2>
-          <p className="mt-1 text-sm text-slate-600">Ultimele tichete create in platforma.</p>
+          <p className="mt-1 text-sm text-slate-600">
+            {user?.isAgent ? "Ultimele tichete din departamentul tau." : "Ultimele tichete ale tale."}
+          </p>
 
           {ticketsQuery.isLoading ? (
-            <div className="mt-4">
-              <Loader />
-            </div>
+            <div className="mt-4"><Loader /></div>
           ) : (
             <div className="mt-4 space-y-3">
               {tickets.slice(0, 4).map((ticket) => (
                 <div key={ticket.id} className="rounded-xl border border-slate-200 bg-white/90 p-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="font-semibold text-slate-900">{ticket.subject}</p>
-                    <Badge variant="neutral">{ticket.id}</Badge>
+                    <Badge variant="neutral">{formatTicketId(ticket.id)}</Badge>
                   </div>
                   <p className="mt-1 text-sm text-slate-600">{ticket.description}</p>
                   <p className="mt-2 text-xs text-slate-500">Acum {relativeDate(ticket.createdAt)}</p>
                 </div>
               ))}
-
               {!tickets.length ? <p className="text-sm text-slate-600">Nu exista tichete inca.</p> : null}
             </div>
           )}

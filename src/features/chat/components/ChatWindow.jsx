@@ -1,26 +1,19 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { MessageBubble } from "@/features/chat/components/MessageBubble";
 import { TypingIndicator } from "@/features/chat/components/TypingIndicator";
 
-export function ChatWindow({
-  messages,
-  isSending,
-  onSend,
-  onClear,
-  onCreateTicket,
-}) {
+export function ChatWindow({ messages, isSending, onSend, onClear, firstUserMessage }) {
   const [draft, setDraft] = useState("");
   const messagesContainerRef = useRef(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const node = messagesContainerRef.current;
-    if (!node) {
-      return;
-    }
-
+    if (!node) return;
     node.scrollTop = node.scrollHeight;
   }, [messages, isSending]);
 
@@ -28,6 +21,13 @@ export function ChatWindow({
     event.preventDefault();
     onSend(draft);
     setDraft("");
+  };
+
+  const handleEscalate = () => {
+    const params = firstUserMessage
+      ? `?description=${encodeURIComponent(firstUserMessage)}`
+      : "";
+    navigate(`/tickets/new${params}`);
   };
 
   return (
@@ -50,7 +50,7 @@ export function ChatWindow({
         className="h-[clamp(18rem,50vh,36rem)] space-y-3 overflow-y-auto bg-slate-50/60 p-3 sm:p-4"
       >
         {messages.map((message) => (
-          <MessageBubble key={message.id} message={message} onCreateTicket={onCreateTicket} />
+          <MessageBubble key={message.id} message={message} />
         ))}
 
         {isSending ? <TypingIndicator /> : null}
@@ -58,16 +58,27 @@ export function ChatWindow({
 
       <form
         onSubmit={handleSubmit}
-        className="flex flex-col gap-3 border-t border-slate-200 bg-white p-3 sm:flex-row sm:p-4"
+        className="flex flex-col gap-3 border-t border-slate-200 bg-white p-3 sm:p-4"
       >
-        <Input
-          placeholder="Ex: Nu imi merge imprimanta de la ghiseu..."
-          value={draft}
-          onChange={(event) => setDraft(event.target.value)}
-          maxLength={800}
-        />
-        <Button type="submit" className="w-full sm:w-auto" disabled={!draft.trim() || isSending}>
-          Trimite
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Input
+            placeholder="Ex: Nu imi merge imprimanta de la ghiseu..."
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            maxLength={800}
+          />
+          <Button type="submit" className="w-full sm:w-auto" disabled={!draft.trim() || isSending}>
+            Trimite
+          </Button>
+        </div>
+
+        <Button
+          type="button"
+          variant="secondary"
+          className="w-full border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100"
+          onClick={handleEscalate}
+        >
+          Problema nu poate fi rezolvata — creeaza tichet
         </Button>
       </form>
     </Card>

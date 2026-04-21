@@ -2,24 +2,15 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { ChatWindow } from "@/features/chat/components/ChatWindow";
 import { useChat } from "@/features/chat/hooks/useChat";
-import { useCreateTicketMutation } from "@/features/tickets/hooks/useTickets";
 
 export function ChatPage() {
-  const { messages, sendMessage, resetConversation, isSending } = useChat();
-  const createTicketMutation = useCreateTicketMutation();
-
-  const handleCreateTicket = (suggestion) => {
-    return createTicketMutation.mutateAsync({
-      ...suggestion,
-      source: "chat",
-    });
-  };
+  const { messages, sendMessage, resetConversation, isSending, firstUserMessage } = useChat();
 
   return (
     <div className="space-y-4">
       <PageHeader
         title="Chat AI intern"
-        subtitle="Raspunsuri rapide pentru intrebari operationale. Escalare automata in tichet cand este necesar."
+        subtitle="Raspunsuri rapide pentru intrebari operationale. Escalare in tichet cand este necesar."
       />
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_18.75rem]">
@@ -28,7 +19,7 @@ export function ChatPage() {
           isSending={isSending}
           onSend={sendMessage}
           onClear={resetConversation}
-          onCreateTicket={handleCreateTicket}
+          firstUserMessage={firstUserMessage}
         />
 
         <Card>

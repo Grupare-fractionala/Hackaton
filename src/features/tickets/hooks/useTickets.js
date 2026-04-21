@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createTicket, getTickets, respondToTicket } from "@/features/tickets/api/ticketApi";
+import { createTicket, deleteTicket, getTickets, respondToTicket } from "@/features/tickets/api/ticketApi";
 import { useAuthStore } from "@/store/useAuthStore";
 
 const TICKETS_QUERY_KEY = ["tickets"];
@@ -16,6 +16,7 @@ export function useTicketsQuery() {
     queryFn: getTickets,
     enabled: Boolean(token),
     refetchOnMount: "always",
+    refetchInterval: 5000,
   });
 }
 
@@ -27,6 +28,14 @@ export function useCreateTicketMutation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: TICKETS_QUERY_KEY });
     },
+  });
+}
+
+export function useDeleteTicketMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteTicket,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: TICKETS_QUERY_KEY }),
   });
 }
 

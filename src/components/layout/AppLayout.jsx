@@ -3,11 +3,17 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/utils/cn";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
 
-const links = [
+const BASE_LINKS = [
   { to: "/", label: "Dashboard", end: true },
   { to: "/chat", label: "Chat AI" },
   { to: "/tickets", label: "Tichete" },
+];
+
+const ADMIN_LINKS = [
+  { to: "/admin/tickets", label: "Toate tichetele" },
+  { to: "/admin/users", label: "Utilizatori" },
   { to: "/documents", label: "Documente" },
 ];
 
@@ -17,6 +23,10 @@ export function AppLayout() {
 
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
+  const currentUser = useCurrentUser();
+
+  const links = BASE_LINKS;
+  const adminLinks = currentUser?.isAdmin ? ADMIN_LINKS : [];
 
   const initials = useMemo(() => {
     if (!user?.name) {
@@ -36,11 +46,13 @@ export function AppLayout() {
     navigate("/login", { replace: true });
   };
 
-  const roleLabel = user?.role === "admin"
-    ? "Administrator"
-    : user?.role === "agent"
-      ? `Operator ${user?.handledDepartments?.join(", ") || ""}`.trim()
-      : "Angajat";
+  const roleLabel = {
+    admin: "Administrator",
+    agent_tehnic: "Agent Tehnic",
+    agent_hr: "Agent HR",
+    agent_legislativ: "Agent Legislativ",
+    employee: "Angajat",
+  }[currentUser?.role] ?? "Angajat";
 
   useEffect(() => {
     if (!isMobileMenuOpen) {
@@ -98,6 +110,31 @@ export function AppLayout() {
                 {link.label}
               </NavLink>
             ))}
+
+            {adminLinks.length > 0 ? (
+              <div className="pt-3">
+                <p className="mb-1 px-3 text-xs font-semibold uppercase tracking-widest text-slate-400">
+                  Admin
+                </p>
+                {adminLinks.map((link) => (
+                  <NavLink
+                    key={link.to}
+                    to={link.to}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={({ isActive }) =>
+                      cn(
+                        "block rounded-xl px-3 py-2 text-sm font-medium transition",
+                        isActive
+                          ? "bg-brand-100 text-brand-800"
+                          : "text-slate-700 hover:bg-white hover:text-slate-900",
+                      )
+                    }
+                  >
+                    {link.label}
+                  </NavLink>
+                ))}
+              </div>
+            ) : null}
           </nav>
 
           <div className="mt-auto rounded-2xl bg-white/80 p-3">

@@ -117,10 +117,13 @@ export function useChat() {
     localStorage.setItem(storageKey, JSON.stringify(initial));
   };
 
+  const firstUserMessage = messages.find((m) => m.role === "user")?.content || "";
+
   return {
     messages,
     sendMessage,
     resetConversation,
     isSending: mutation.isPending,
+    firstUserMessage,
   };
 }

@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { Navigate } from "react-router-dom";
+import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -7,7 +9,7 @@ import { Input } from "@/components/ui/Input";
 import { Loader } from "@/components/ui/Loader";
 import { Select } from "@/components/ui/Select";
 import { Textarea } from "@/components/ui/Textarea";
-import { useCreateDocumentMutation, useDocumentsQuery } from "@/features/documents/hooks/useDocuments";
+import { useCreateDocumentMutation, useDeleteDocumentMutation, useDocumentsQuery } from "@/features/documents/hooks/useDocuments";
 import {
   DOCUMENT_CATEGORIES,
   DOCUMENT_DEPARTMENTS,
@@ -44,7 +46,7 @@ const orientationSections = [
   },
 ];
 
-const searchFieldCandidates = ["title", "description", "fileName", "uploadedByName"];
+const searchFieldCandidates = ["file_name", "department"];
 
 function readFileAsDataUrl(file) {
   return new Promise((resolve, reject) => {
@@ -70,9 +72,15 @@ function formatFileSize(bytes) {
 }
 
 export function KnowledgePage() {
+  const currentUser = useCurrentUser();
   const user = useAuthStore((state) => state.user);
+
+  if (currentUser && !currentUser.isAdmin) {
+    return <Navigate to="/" replace />;
+  }
   const documentsQuery = useDocumentsQuery();
   const createDocumentMutation = useCreateDocumentMutation();
+  const deleteDocumentMutation = useDeleteDocumentMutation();
 
   const employeeDepartment = getAssignedDepartmentByCategory(user?.department || "");
 
@@ -121,10 +129,6 @@ export function KnowledgePage() {
 
   const documents = documentsQuery.data || [];
 
-  const categoryOptions = useMemo(() => {
-    return Array.from(new Set([...DOCUMENT_CATEGORIES, ...documents.map((document) => document.category)]));
-  }, [documents]);
-
   const departmentOptions = useMemo(() => {
     return Array.from(
       new Set([...DOCUMENT_DEPARTMENTS, ...documents.map((document) => document.department)]),
@@ -137,16 +141,15 @@ export function KnowledgePage() {
     return documents.filter((document) => {
       const departmentMatches =
         filters.department === "Toate" || document.department === filters.department;
-      const categoryMatches = filters.category === "Toate" || document.category === filters.category;
       const queryMatches = !normalizedQuery
         ? true
         : searchFieldCandidates.some((field) =>
             String(document[field] || "").toLowerCase().includes(normalizedQuery),
           );
 
-      return departmentMatches && categoryMatches && queryMatches;
+      return departmentMatches && queryMatches;
     });
-  }, [documents, filters.category, filters.department, filters.query]);
+  }, [documents, filters.department, filters.query]);
 
   const handleDownload = (documentItem) => {
     if (!documentItem.fileDataUrl) {
@@ -172,18 +175,7 @@ export function KnowledgePage() {
     }
 
     try {
-      const fileDataUrl = await readFileAsDataUrl(form.file);
-
-      await createDocumentMutation.mutateAsync({
-        title: form.title,
-        category: form.category,
-        department: form.department,
-        description: form.description,
-        fileName: form.file.name,
-        fileType: form.file.type || "application/octet-stream",
-        fileSize: form.file.size,
-        fileDataUrl,
-      });
+      await createDocumentMutation.mutateAsync({ file: form.file, department: form.department });
 
       setSuccessMessage("Document incarcat cu succes.");
       setForm((prev) => ({
@@ -336,21 +328,6 @@ export function KnowledgePage() {
 
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Categorie
-              </label>
-              <Select
-                value={filters.category}
-                onChange={(event) => setFilters((prev) => ({ ...prev, category: event.target.value }))}
-              >
-                <option>Toate</option>
-                {categoryOptions.map((category) => (
-                  <option key={category}>{category}</option>
-                ))}
-              </Select>
-            </div>
-
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Cautare
               </label>
               <Input
@@ -371,34 +348,37 @@ export function KnowledgePage() {
                 <div key={documentItem.id} className="rounded-xl border border-slate-200 bg-white/80 p-3">
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div>
-                      <p className="font-semibold text-slate-900">{documentItem.title}</p>
-                      <p className="text-xs text-slate-500">{documentItem.fileName}</p>
+                      <p className="font-semibold text-slate-900">{documentItem.file_name}</p>
                     </div>
-                    <Badge variant="neutral">{documentItem.id}</Badge>
-                  </div>
-
-                  <div className="mt-2 flex flex-wrap gap-2">
                     <Badge variant="info">{documentItem.department}</Badge>
-                    <Badge variant="neutral">{documentItem.category}</Badge>
                   </div>
-
-                  {documentItem.description ? (
-                    <p className="mt-2 text-sm text-slate-700">{documentItem.description}</p>
-                  ) : null}
 
                   <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
                     <p className="text-xs text-slate-500">
-                      Incarcat de {documentItem.uploadedByName} la {formatDateTime(documentItem.createdAt)} |{" "}
-                      {formatFileSize(documentItem.fileSize)}
+                      {formatDateTime(documentItem.created_at)}
                     </p>
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={() => handleDownload(documentItem)}
-                      disabled={!documentItem.fileDataUrl}
-                    >
-                      Descarca
-                    </Button>
+                    <div className="flex items-center gap-3">
+                      {documentItem.file_url ? (
+                        <a
+                          href={documentItem.file_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs font-medium text-brand-700 hover:underline"
+                        >
+                          Deschide
+                        </a>
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          deleteDocumentMutation.mutate({ id: documentItem.id, fileUrl: documentItem.file_url })
+                        }
+                        disabled={deleteDocumentMutation.isPending}
+                        className="text-xs font-medium text-rose-600 hover:underline disabled:opacity-50"
+                      >
+                        Sterge
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))
