@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
+import { isMockMode } from "@/config/env";
 import { supabase } from "@/supabaseClient";
 import { useAuthStore } from "@/store/useAuthStore";
 
@@ -39,6 +40,10 @@ export function AppProviders({ children }) {
   );
 
   useEffect(() => {
+    if (isMockMode) {
+      return undefined;
+    }
+
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       const sessionData = await buildUserSession(session?.user ?? null);
       setSession(sessionData);

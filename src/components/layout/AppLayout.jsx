@@ -9,6 +9,7 @@ const BASE_LINKS = [
   { to: "/", label: "Dashboard", end: true },
   { to: "/chat", label: "Chat AI" },
   { to: "/tickets", label: "Tichete" },
+  { to: "/announcements", label: "Anunturi" },
 ];
 
 const ADMIN_LINKS = [
