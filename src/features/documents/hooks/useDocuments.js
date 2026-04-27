@@ -23,7 +23,8 @@ export function useCreateDocumentMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ file, department }) => createDocument(file, department),
+    mutationFn: ({ file, department, title, category, description }) =>
+      createDocument(file, department, { title, category, description }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: DOCUMENTS_QUERY_KEY });
     },

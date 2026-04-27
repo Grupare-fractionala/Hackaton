@@ -2,6 +2,32 @@ import { supabase } from "@/supabaseClient";
 import { createMockDocument, deleteMockDocument, getMockDocuments } from "@/api/mockStore";
 import { isMockMode } from "@/config/env";
 
+const FLOWISE_BASE_URL = "/flowise";
+const FLOWISE_API_KEY = import.meta.env.VITE_FLOWISE_API_KEY;
+
+const DEPARTMENT_TO_CHATFLOW = {
+  HR: import.meta.env.VITE_FLOWISE_HR_ID,
+  Legislativ: import.meta.env.VITE_FLOWISE_JURIDIC_ID,
+};
+
+async function upsertToFlowise(file, department) {
+  const chatflowId = DEPARTMENT_TO_CHATFLOW[department];
+  if (!chatflowId) return;
+
+  const formData = new FormData();
+  formData.append("files", file);
+
+  const response = await fetch(`${FLOWISE_BASE_URL}/api/v1/vector/upsert/${chatflowId}`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${FLOWISE_API_KEY}` },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Flowise upsert failed: ${response.status}`);
+  }
+}
+
 export async function getDocuments() {
   if (isMockMode) {
     return getMockDocuments();
@@ -16,7 +42,7 @@ export async function getDocuments() {
   return data;
 }
 
-export async function createDocument(file, department = "General") {
+export async function createDocument(file, department = "General", { title, category, description } = {}) {
   if (isMockMode) {
     return createMockDocument(file, department);
   }
@@ -39,11 +65,17 @@ export async function createDocument(file, department = "General") {
       file_name: file.name,
       file_url: urlData.publicUrl,
       department,
+      title: title || file.name,
+      category: category || null,
+      description: description || null,
     }])
     .select()
     .single();
 
   if (dbError) throw dbError;
+
+  await upsertToFlowise(file, department);
+
   return dbData;
 }
 
@@ -52,7 +84,6 @@ export async function deleteDocument(id, fileUrl) {
     return deleteMockDocument(id);
   }
 
-  // Extract storage path from the public URL
   const urlParts = fileUrl ? fileUrl.split("/company_documents/") : [];
   if (urlParts.length === 2) {
     await supabase.storage.from("company_documents").remove([urlParts[1]]);
