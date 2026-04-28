@@ -75,7 +75,7 @@ async function sendViaFlowise({ message }) {
   let reply;
   if (department === "GENERAL") {
     reply =
-      "Salut! Sunt asistentul virtual al primăriei. Pot să te ajut cu probleme de IT, HR sau Juridice. Te rog detaliază cererea.";
+      "Hmm, nu sunt sigur unde se incadreaza intrebarea ta. 🤔 Eu, mihAI, ma descurc cel mai bine pe **IT**, **HR** sau **Juridic** — poti sa-mi dai cateva detalii in plus ca sa te pot ajuta cum trebuie?";
   } else {
     reply = await callFlowise(department, message, sessionId);
   }
@@ -113,8 +113,8 @@ export async function sendChatMessage(payload) {
 
     return {
       reply: shouldCreateTicket
-        ? `Am incadrat solicitarea la ${category}. Pentru demo local pot genera un tichet din conversatie.`
-        : "Sunt in modul demo local. Pot ajuta cu solicitari Tehnic, HR sau Legislativ si pot propune tichete.",
+        ? `Am inteles, suna a ceva din zona **${category}**. Sunt in mod demo local, dar pot pregati un tichet din conversatia noastra daca vrei sa duci mai departe. 📝`
+        : "Sunt mihAI, in mod demo local 👋. Pot sa te ajut cu intrebari de **Tehnic**, **HR** sau **Legislativ** — spune-mi ce te framanta si gasim impreuna o solutie.",
       category,
       resolved: false,
       shouldCreateTicket,

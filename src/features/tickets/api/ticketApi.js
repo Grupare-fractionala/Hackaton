@@ -32,25 +32,55 @@ export async function createTicket(ticketData) {
 
   const department = getAssignedDepartmentByCategory(ticketData.category);
 
-  const { data, error } = await supabase
-    .from("tickets")
-    .insert([{
-      title: ticketData.subject,
-      subject: ticketData.subject,
-      description: ticketData.description,
-      category: ticketData.category || "Tehnic",
-      priority: ticketData.priority || "Medie",
-      department,
-      status: "Deschis",
-      source: ticketData.source || "manual",
-      user_id: user?.id || null,
-      requesterName: user?.name || user?.username || "Angajat",
-      chat_history: ticketData.chatHistory || null,
-    }])
-    .select();
+  const payload = {
+    title: ticketData.subject,
+    subject: ticketData.subject,
+    description: ticketData.description,
+    category: ticketData.category || "Tehnic",
+    priority: ticketData.priority || "Medie",
+    department,
+    status: "Deschis",
+    source: ticketData.source || "manual",
+    user_id: user?.id || null,
+    requesterName: user?.name || user?.username || "Angajat",
+    chat_history: ticketData.chatHistory || null,
+  };
 
-  if (error) throw error;
-  if (data && data.length > 0) return data[0];
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15_000);
+
+  let response;
+  try {
+    response = await fetch(`${supabaseUrl}/rest/v1/tickets`, {
+      method: "POST",
+      headers: {
+        apikey: supabaseKey,
+        Authorization: `Bearer ${supabaseKey}`,
+        "Content-Type": "application/json",
+        Prefer: "return=representation",
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+  } catch (err) {
+    if (err.name === "AbortError") {
+      throw new Error("Cererea catre Supabase nu a raspuns in 15 secunde. Reincarca pagina si reincearca.");
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new Error(`Insert tichet esuat (${response.status}): ${text || response.statusText}`);
+  }
+
+  const rows = await response.json();
+  if (Array.isArray(rows) && rows.length > 0) return rows[0];
   throw new Error("Failed to create ticket");
 }
 

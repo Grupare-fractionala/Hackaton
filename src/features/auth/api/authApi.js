@@ -32,6 +32,7 @@ export async function login({ username, password }) {
       name: profile.username,
       role: profile.role,
       department: profile.department || "",
+      avatar_url: profile.avatar_url || null,
     },
     token: data.session?.access_token,
   };

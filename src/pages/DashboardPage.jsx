@@ -64,7 +64,7 @@ export function DashboardPage() {
     <div className="space-y-4">
       <PageHeader
         title={`Bine ai venit, ${user?.name || "coleg"}`}
-        subtitle="Monitorizeaza solicitarile si interactioneaza cu asistentul AI intern."
+        subtitle="Monitorizeaza solicitarile sau stai de vorba cu mihAI, asistentul tau de la primarie."
       />
 
       {upcomingDeadlines.length ? (

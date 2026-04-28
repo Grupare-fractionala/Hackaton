@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
@@ -26,11 +27,11 @@ export function ChatWindow({ messages, isSending, onSend, onClear, firstUserMess
   const buildTranscript = () => {
     const lines = messages
       .filter((m) => m.role === "user" || m.role === "ai")
-      .map((m) => `${m.role === "user" ? "Utilizator" : "Asistent AI"}: ${m.content}`);
+      .map((m) => `${m.role === "user" ? "Utilizator" : "mihAI"}: ${m.content}`);
 
     if (!lines.length) return "";
 
-    return ["[Istoric conversatie cu asistentul AI]", "", ...lines].join("\n");
+    return ["[Istoric conversatie cu mihAI]", "", ...lines].join("\n");
   };
 
   const inferredCategory = [...messages]
@@ -49,15 +50,20 @@ export function ChatWindow({ messages, isSending, onSend, onClear, firstUserMess
   return (
     <Card className="min-w-0 overflow-hidden p-0">
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white/80 px-4 py-3">
-        <div>
-          <h2 className="text-lg font-semibold text-slate-900">Asistent intern AI</h2>
-          <p className="text-sm text-slate-600">
-            Intrebari tehnice, HR sau legislative. Daca e nevoie, escalam in tichet.
-          </p>
+        <div className="flex items-center gap-3">
+          <Avatar kind="mihai" size="md" />
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900">
+              mihAI <span className="text-sm font-normal text-slate-500">· asistentul tau de la primarie</span>
+            </h2>
+            <p className="text-sm text-slate-600">
+              Stau aici sa te ajut cu IT, HR sau Juridic. Daca e ceva mai serios, deschidem un tichet impreuna.
+            </p>
+          </div>
         </div>
 
         <Button variant="secondary" size="sm" onClick={onClear}>
-          Reseteaza conversatia
+          Incepem de la zero
         </Button>
       </header>
 
@@ -78,7 +84,7 @@ export function ChatWindow({ messages, isSending, onSend, onClear, firstUserMess
       >
         <div className="flex flex-col gap-2 sm:flex-row">
           <Input
-            placeholder="Ex: Nu imi merge imprimanta de la ghiseu..."
+            placeholder="Spune-i lui mihAI ce s-a intamplat..."
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
             maxLength={800}
@@ -94,7 +100,7 @@ export function ChatWindow({ messages, isSending, onSend, onClear, firstUserMess
           className="w-full border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100"
           onClick={handleEscalate}
         >
-          Problema nu poate fi rezolvata — creeaza tichet
+          Nu reusim sa rezolvam aici — deschide un tichet
         </Button>
       </form>
     </Card>

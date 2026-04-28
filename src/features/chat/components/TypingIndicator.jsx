@@ -6,7 +6,7 @@ export function TypingIndicator() {
           <span className="h-2 w-2 animate-pulse rounded-full bg-brand-500" />
           <span className="h-2 w-2 animate-pulse rounded-full bg-brand-500 [animation-delay:120ms]" />
           <span className="h-2 w-2 animate-pulse rounded-full bg-brand-500 [animation-delay:240ms]" />
-          <span className="ml-1 text-xs text-slate-600">AI raspunde...</span>
+          <span className="ml-1 text-xs text-slate-600">mihAI scrie un raspuns...</span>
         </div>
       </div>
     </div>

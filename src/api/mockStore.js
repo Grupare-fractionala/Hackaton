@@ -1,4 +1,5 @@
 import { getAssignedDepartmentByCategory } from "@/features/tickets/utils/routing";
+import { getUserAvatarUrl } from "@/utils/avatar";
 
 const USERS_KEY = "primarie-mock-users";
 const TICKETS_KEY = "primarie-mock-tickets";
@@ -14,9 +15,10 @@ const defaultUsers = [
     id: "mock-user-secretara",
     username: "secretara",
     password: "Secretara123!",
-    name: "Secretara Primarie",
+    name: "Maria Popescu",
     role: "employee",
     department: "Registratura",
+    avatar_url: "https://randomuser.me/api/portraits/women/65.jpg",
     created_at: minutesAgo(12_000),
   },
   {
@@ -26,6 +28,7 @@ const defaultUsers = [
     name: "Operator Tehnic",
     role: "agent_tehnic",
     department: "Tehnic",
+    avatar_url: "https://randomuser.me/api/portraits/men/32.jpg",
     created_at: minutesAgo(11_500),
   },
   {
@@ -35,6 +38,7 @@ const defaultUsers = [
     name: "Operator HR",
     role: "agent_hr",
     department: "HR",
+    avatar_url: "https://randomuser.me/api/portraits/men/75.jpg",
     created_at: minutesAgo(11_000),
   },
   {
@@ -44,6 +48,7 @@ const defaultUsers = [
     name: "Operator Administrativ",
     role: "agent_legislativ",
     department: "Administrativ",
+    avatar_url: "https://randomuser.me/api/portraits/men/56.jpg",
     created_at: minutesAgo(10_500),
   },
   {
@@ -53,6 +58,7 @@ const defaultUsers = [
     name: "Operator Urbanism",
     role: "agent_legislativ",
     department: "Urbanism",
+    avatar_url: "https://randomuser.me/api/portraits/men/85.jpg",
     created_at: minutesAgo(10_000),
   },
   {
@@ -62,6 +68,7 @@ const defaultUsers = [
     name: "Administrator IT",
     role: "admin",
     department: "IT",
+    avatar_url: "https://randomuser.me/api/portraits/men/41.jpg",
     created_at: minutesAgo(9_500),
   },
 ];
@@ -78,7 +85,7 @@ const defaultTickets = [
     status: "Deschis",
     source: "manual",
     user_id: "mock-user-secretara",
-    requesterName: "Secretara Primarie",
+    requesterName: "Maria Popescu",
     created_at: minutesAgo(80),
     createdAt: minutesAgo(80),
   },
@@ -93,7 +100,7 @@ const defaultTickets = [
     status: "In lucru",
     source: "chat",
     user_id: "mock-user-secretara",
-    requesterName: "Secretara Primarie",
+    requesterName: "Maria Popescu",
     created_at: minutesAgo(240),
     createdAt: minutesAgo(240),
   },
@@ -108,7 +115,7 @@ const defaultTickets = [
     status: "Rezolvat",
     source: "manual",
     user_id: "mock-user-secretara",
-    requesterName: "Secretara Primarie",
+    requesterName: "Maria Popescu",
     created_at: minutesAgo(1_440),
     createdAt: minutesAgo(1_440),
   },
@@ -207,6 +214,7 @@ export async function createMockUser({ username, password, role, department }) {
     name: normalizedUsername,
     role,
     department: department || "",
+    avatar_url: getUserAvatarUrl({ username: normalizedUsername }),
     created_at: new Date().toISOString(),
   };
 

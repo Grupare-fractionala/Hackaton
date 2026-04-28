@@ -5,10 +5,11 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { uid } from "@/utils/id";
 
 function getWelcomeMessage(name) {
+  const firstName = (name || "").split(" ")[0] || "coleg";
   return {
     id: uid("msg"),
     role: "ai",
-    content: `Salut, ${name || "coleg"}. Sunt asistentul intern pentru solicitari tehnice, HR si legislative.`,
+    content: `Salut, ${firstName}! Eu sunt **mihAI**, asistentul tau virtual de la primarie. 👋\n\nMa pricep la intrebari de **IT**, **HR** si **Juridic** — daca te-ai blocat, te-am ascultat. Spune-mi pe scurt ce s-a intamplat si vedem impreuna ce putem face. Daca depaseste puterile mele, te ajut sa deschizi un tichet in cateva secunde.`,
     createdAt: new Date().toISOString(),
   };
 }
@@ -83,7 +84,7 @@ export function useChat() {
         role: "ai",
         content:
           error?.response?.data?.message ||
-          "A aparut o problema la procesarea mesajului. Incearca din nou.",
+          "Hmm, ceva nu a mers cum trebuie de partea mea. 😅 Mai incearca o data, te rog — poate reformulezi putin si vad daca pot ajuta.",
         category: "General",
         ticketSuggestion: null,
         resolved: false,

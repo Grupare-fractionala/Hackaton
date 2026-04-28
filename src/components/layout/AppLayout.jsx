@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
+import { getUserAvatarUrl } from "@/utils/avatar";
 import { cn } from "@/utils/cn";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
@@ -15,7 +17,7 @@ import {
 
 const BASE_LINKS = [
   { to: "/", label: "Dashboard", end: true },
-  { to: "/chat", label: "Chat AI" },
+  { to: "/chat", label: "Chat cu mihAI" },
   { to: "/tickets", label: "Tichete" },
   { to: "/announcements", label: "Anunturi" },
   { to: "/deadlines", label: "Termene", urgentBadge: true },
@@ -52,19 +54,6 @@ export function AppLayout() {
       return info.urgency === "overdue" || info.urgency === "critical" || info.urgency === "soon";
     }).length;
   }, [announcementsQuery.data, completedDeadlinesQuery.data, currentUser]);
-
-  const initials = useMemo(() => {
-    if (!user?.name) {
-      return "U";
-    }
-
-    return user.name
-      .split(" ")
-      .map((part) => part[0])
-      .join("")
-      .slice(0, 2)
-      .toUpperCase();
-  }, [user?.name]);
 
   const handleLogout = () => {
     logout();
@@ -195,9 +184,12 @@ export function AppLayout() {
                 <p className="text-sm font-semibold text-slate-900">{user?.name || "Utilizator"}</p>
                 <p className="text-xs text-slate-500">{roleLabel}</p>
               </div>
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-brand-200 to-brand-300 text-sm font-bold text-brand-900 ring-2 ring-brand-300/80 shadow-[0_6px_16px_rgba(34,184,173,0.28)] sm:h-10 sm:w-10">
-                {initials}
-              </div>
+              <Avatar
+                src={getUserAvatarUrl(user)}
+                name={user?.name}
+                seed={user?.username || user?.id}
+                size="md"
+              />
               <Button variant="ghost" size="sm" onClick={handleLogout}>
                 Logout
               </Button>

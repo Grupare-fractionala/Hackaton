@@ -1,12 +1,22 @@
 import { useEffect, useRef, useState } from "react";
+import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Loader } from "@/components/ui/Loader";
 import { Textarea } from "@/components/ui/Textarea";
 import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
 import { useTicketMessagesQuery, useSendTicketMessageMutation } from "@/features/tickets/hooks/useTicketMessages";
+import { getUserAvatarUrl } from "@/utils/avatar";
 import { formatDateTime, formatTicketId } from "@/utils/date";
 import { cn } from "@/utils/cn";
+
+const ROLE_LABEL = {
+  admin: "Administrator",
+  agent_tehnic: "Agent Tehnic",
+  agent_hr: "Agent HR",
+  agent_legislativ: "Agent Legislativ",
+  employee: "Angajat",
+};
 
 function parseChatHistory(history) {
   if (!history) return [];
@@ -25,7 +35,7 @@ function parseChatHistory(history) {
     }
 
     const userMatch = raw.match(/^Utilizator:\s?(.*)$/);
-    const aiMatch = raw.match(/^Asistent AI:\s?(.*)$/);
+    const aiMatch = raw.match(/^(?:mihAI|Asistent AI):\s?(.*)$/);
 
     if (userMatch) {
       if (current) turns.push(current);
@@ -63,9 +73,9 @@ function ChatHistoryModal({ history, onClose }) {
       <div className="fixed left-1/2 top-1/2 z-[70] flex max-h-[85vh] w-[min(40rem,92vw)] -translate-x-1/2 -translate-y-1/2 flex-col rounded-2xl bg-white shadow-2xl">
         <header className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
           <div>
-            <h3 className="text-base font-semibold text-slate-900">Istoric conversatie AI</h3>
+            <h3 className="text-base font-semibold text-slate-900">Istoric conversatie cu mihAI</h3>
             <p className="text-xs text-slate-500">
-              Conversatia originala dintre solicitant si asistentul AI.
+              Conversatia originala dintre solicitant si mihAI.
             </p>
           </div>
           <Button variant="ghost" size="sm" onClick={onClose}>
@@ -82,23 +92,33 @@ function ChatHistoryModal({ history, onClose }) {
               return (
                 <div
                   key={idx}
-                  className={cn("flex", isUser ? "justify-end" : "justify-start")}
+                  className={cn(
+                    "flex items-end gap-2",
+                    isUser ? "justify-end" : "justify-start",
+                  )}
                 >
+                  {!isUser ? <Avatar kind="mihai" size="sm" /> : null}
                   <div
                     className={cn(
-                      "max-w-[85%] rounded-2xl px-3 py-2 text-sm shadow-sm",
+                      "max-w-[80%] rounded-2xl px-3 py-2 text-sm shadow-sm",
                       isUser
                         ? "rounded-br-md bg-brand-600 text-white"
                         : "rounded-bl-md border border-slate-200 bg-white text-slate-800",
                     )}
                   >
-                    <p className="mb-1 text-[11px] font-semibold opacity-80">
-                      {isUser ? "Solicitant" : "Asistent AI"}
+                    <p className={cn(
+                      "mb-1 text-[11px] font-semibold",
+                      isUser ? "text-white/80" : "text-brand-700",
+                    )}>
+                      {isUser ? "Solicitant" : "mihAI"}
                     </p>
                     <p className="whitespace-pre-wrap break-words leading-relaxed">
                       {turn.content}
                     </p>
                   </div>
+                  {isUser ? (
+                    <Avatar name="Solicitant" seed="solicitant" size="sm" />
+                  ) : null}
                 </div>
               );
             })
@@ -195,7 +215,7 @@ export function TicketChatPanel({ ticket, onClose }) {
               onClick={() => setHistoryOpen(true)}
               className="w-full border-amber-300 bg-amber-100 text-amber-900 hover:bg-amber-200"
             >
-              🤖 Vezi istoricul conversatiei AI
+              🤖 Vezi conversatia cu mihAI
             </Button>
           </div>
         ) : null}
@@ -210,27 +230,71 @@ export function TicketChatPanel({ ticket, onClose }) {
           ) : (
             messages.map((msg) => {
               const isMe = msg.user_id === user?.id;
+              const displayName = isMe
+                ? user?.name || msg.user_name || "Tu"
+                : msg.user_name || "Utilizator";
+              const roleLabel = ROLE_LABEL[msg.user_role] || null;
+              const avatarSrc = isMe
+                ? getUserAvatarUrl(user)
+                : getUserAvatarUrl({ username: msg.user_name, name: msg.user_name });
+
               return (
                 <article
                   key={msg.id}
-                  className={cn("flex", isMe ? "justify-end" : "justify-start")}
+                  className={cn(
+                    "flex items-end gap-2",
+                    isMe ? "justify-end" : "justify-start",
+                  )}
                 >
+                  {!isMe ? (
+                    <Avatar
+                      src={avatarSrc}
+                      name={displayName}
+                      seed={msg.user_id || displayName}
+                      size="sm"
+                    />
+                  ) : null}
+
                   <div
                     className={cn(
-                      "max-w-[85%] rounded-2xl px-3 py-2 text-sm shadow-sm",
+                      "max-w-[78%] rounded-2xl px-3 py-2 text-sm shadow-sm",
                       isMe
                         ? "rounded-br-md bg-brand-600 text-white"
                         : "rounded-bl-md border border-slate-200 bg-white text-slate-800",
                     )}
                   >
-                    {!isMe ? (
-                      <p className="mb-1 text-xs font-semibold text-slate-500">{msg.user_name}</p>
-                    ) : null}
+                    <p
+                      className={cn(
+                        "mb-1 text-xs font-semibold",
+                        isMe ? "text-white/85" : "text-slate-700",
+                      )}
+                    >
+                      {isMe ? "Tu" : displayName}
+                      {roleLabel ? (
+                        <span
+                          className={cn(
+                            "ml-1 font-normal",
+                            isMe ? "text-white/65" : "text-slate-400",
+                          )}
+                        >
+                          · {roleLabel}
+                        </span>
+                      ) : null}
+                    </p>
                     <p className="break-words leading-relaxed whitespace-pre-wrap">{msg.message}</p>
                     <p className={cn("mt-1 text-[11px]", isMe ? "text-white/70" : "text-slate-400")}>
                       {formatDateTime(msg.created_at)}
                     </p>
                   </div>
+
+                  {isMe ? (
+                    <Avatar
+                      src={avatarSrc}
+                      name={displayName}
+                      seed={user?.id || displayName}
+                      size="sm"
+                    />
+                  ) : null}
                 </article>
               );
             })

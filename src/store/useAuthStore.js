@@ -22,13 +22,14 @@ export const useAuthStore = create(
         set({ user, token });
       },
       logout: async () => {
-        if (!isMockMode) {
-          const { supabase } = await import("@/supabaseClient");
-          await supabase.auth.signOut();
-        }
-
         localStorage.removeItem("token");
         set({ user: null, token: null });
+
+        if (!isMockMode) {
+          import("@/supabaseClient")
+            .then(({ supabase }) => supabase.auth.signOut({ scope: "local" }))
+            .catch(() => {});
+        }
       },
     }),
     {

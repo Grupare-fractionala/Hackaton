@@ -1,4 +1,5 @@
 import ReactMarkdown from "react-markdown";
+import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
 import { formatDateTime } from "@/utils/date";
 import { cn } from "@/utils/cn";
@@ -8,9 +9,11 @@ export function MessageBubble({ message }) {
 
   return (
     <article
-      className={cn("message-enter flex", isUser ? "justify-end" : "justify-start")}
+      className={cn("message-enter flex items-end gap-2", isUser ? "justify-end" : "justify-start")}
       aria-live="polite"
     >
+      {!isUser ? <Avatar kind="mihai" size="sm" /> : null}
+
       <div
         className={cn(
           "max-w-[95%] rounded-2xl p-3 text-sm shadow-sm sm:max-w-[85%]",
@@ -19,10 +22,15 @@ export function MessageBubble({ message }) {
             : "rounded-bl-md border border-slate-200 bg-white text-slate-800",
         )}
       >
-        {!isUser && message.category ? (
-          <Badge className="mb-2" variant="neutral">
-            {message.category}
-          </Badge>
+        {!isUser ? (
+          <div className="mb-1 flex items-center gap-2">
+            <span className="text-[11px] font-semibold uppercase tracking-wide text-brand-700">
+              mihAI
+            </span>
+            {message.category ? (
+              <Badge variant="neutral">{message.category}</Badge>
+            ) : null}
+          </div>
         ) : null}
 
         <div
