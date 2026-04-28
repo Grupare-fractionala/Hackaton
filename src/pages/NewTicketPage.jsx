@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -10,13 +10,17 @@ import { useCreateTicketMutation } from "@/features/tickets/hooks/useTickets";
 
 export function NewTicketPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const createTicketMutation = useCreateTicketMutation();
 
   const prefillDescription = searchParams.get("description") || "";
+  const chatHistory = location.state?.chatHistory || "";
+  const inferredCategory = location.state?.category;
+  const fromChat = Boolean(chatHistory);
 
   const [form, setForm] = useState({
-    category: "Tehnic",
+    category: inferredCategory || "Tehnic",
     priority: "Medie",
     subject: "",
     description: prefillDescription,
@@ -24,7 +28,11 @@ export function NewTicketPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await createTicketMutation.mutateAsync({ ...form, source: "manual" });
+    await createTicketMutation.mutateAsync({
+      ...form,
+      source: fromChat ? "chat" : "manual",
+      chatHistory,
+    });
     navigate("/tickets");
   };
 

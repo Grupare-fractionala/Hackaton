@@ -61,6 +61,13 @@ export async function deleteUser(userId) {
     return deleteMockUser(userId);
   }
 
+  const { error: ticketsError } = await supabaseAdmin
+    .from("tickets")
+    .update({ user_id: null })
+    .eq("user_id", userId);
+
+  if (ticketsError) throw ticketsError;
+
   const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
   if (error) throw error;
 }

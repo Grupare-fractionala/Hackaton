@@ -1,3 +1,4 @@
+import ReactMarkdown from "react-markdown";
 import { Badge } from "@/components/ui/Badge";
 import { formatDateTime } from "@/utils/date";
 import { cn } from "@/utils/cn";
@@ -24,7 +25,14 @@ export function MessageBubble({ message }) {
           </Badge>
         ) : null}
 
-        <p className="break-words leading-relaxed whitespace-pre-wrap">{message.content}</p>
+        <div
+          className={cn(
+            "break-words leading-relaxed prose prose-sm max-w-none prose-p:my-1 prose-ul:my-1 prose-ol:my-1",
+            isUser && "prose-invert prose-headings:text-white prose-strong:text-white",
+          )}
+        >
+          <ReactMarkdown>{message.content}</ReactMarkdown>
+        </div>
 
         <p className={cn("mt-2 text-[11px]", isUser ? "text-white/70" : "text-slate-500")}>
           {formatDateTime(message.createdAt)}

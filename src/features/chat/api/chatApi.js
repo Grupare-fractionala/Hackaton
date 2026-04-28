@@ -1,6 +1,7 @@
 import { isMockMode } from "@/config/env";
 
-const FLOWISE_BASE_URL = import.meta.env.VITE_FLOWISE_BASE_URL || "http://localhost:3000";
+const FLOWISE_BASE_URL = import.meta.env.VITE_FLOWISE_BASE_URL || "/flowise";
+const FLOWISE_API_KEY = import.meta.env.VITE_FLOWISE_API_KEY;
 const FLOW_IDS = {
   clasificare: import.meta.env.VITE_FLOWISE_CLASSIFICATION_ID,
   IT: import.meta.env.VITE_FLOWISE_IT_ID,
@@ -33,7 +34,10 @@ async function callFlowise(flowKey, question, sessionId) {
   const url = `${FLOWISE_BASE_URL}/api/v1/prediction/${flowId}`;
   const response = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(FLOWISE_API_KEY && { Authorization: `Bearer ${FLOWISE_API_KEY}` }),
+    },
     body: JSON.stringify({ question, sessionId }),
   });
   if (!response.ok) {

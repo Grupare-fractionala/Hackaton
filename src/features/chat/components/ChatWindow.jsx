@@ -23,11 +23,27 @@ export function ChatWindow({ messages, isSending, onSend, onClear, firstUserMess
     setDraft("");
   };
 
+  const buildTranscript = () => {
+    const lines = messages
+      .filter((m) => m.role === "user" || m.role === "ai")
+      .map((m) => `${m.role === "user" ? "Utilizator" : "Asistent AI"}: ${m.content}`);
+
+    if (!lines.length) return "";
+
+    return ["[Istoric conversatie cu asistentul AI]", "", ...lines].join("\n");
+  };
+
+  const inferredCategory = [...messages]
+    .reverse()
+    .find((m) => m.role === "ai" && m.category && m.category !== "General")?.category;
+
   const handleEscalate = () => {
-    const params = firstUserMessage
-      ? `?description=${encodeURIComponent(firstUserMessage)}`
-      : "";
-    navigate(`/tickets/new${params}`);
+    navigate("/tickets/new", {
+      state: {
+        chatHistory: buildTranscript(),
+        category: inferredCategory,
+      },
+    });
   };
 
   return (

@@ -1,11 +1,20 @@
 import { useMemo } from "react";
+import { Link } from "react-router-dom";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { Loader } from "@/components/ui/Loader";
+import {
+  useAnnouncementsQuery,
+  useCompletedDeadlinesQuery,
+} from "@/features/announcements/hooks/useAnnouncements";
 import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
 import { useTicketsQuery } from "@/features/tickets/hooks/useTickets";
-import { formatTicketId, relativeDate } from "@/utils/date";
+import {
+  getDeadlineInfo,
+  isRelevantForUser,
+} from "@/features/announcements/utils/helpers";
+import { formatDateTime, formatTicketId, relativeDate } from "@/utils/date";
 
 function countByStatus(tickets, status) {
   return tickets.filter((t) => t.status === status).length;
@@ -14,6 +23,8 @@ function countByStatus(tickets, status) {
 export function DashboardPage() {
   const user = useCurrentUser();
   const ticketsQuery = useTicketsQuery();
+  const announcementsQuery = useAnnouncementsQuery();
+  const completedDeadlinesQuery = useCompletedDeadlinesQuery();
   const allTickets = ticketsQuery.data || [];
 
   const tickets = useMemo(() => {
@@ -23,6 +34,24 @@ export function DashboardPage() {
     }
     return allTickets.filter((t) => t.user_id === user.id);
   }, [allTickets, user]);
+
+  const upcomingDeadlines = useMemo(() => {
+    const items = announcementsQuery.data || [];
+    const completed = new Set(completedDeadlinesQuery.data || []);
+    return items
+      .filter(
+        (item) =>
+          item.type === "deadline" &&
+          isRelevantForUser(item, user) &&
+          !completed.has(item.id),
+      )
+      .map((item) => ({ item, info: getDeadlineInfo(item) }))
+      .filter(({ info }) =>
+        ["overdue", "critical", "soon", "this-week"].includes(info.urgency),
+      )
+      .sort((a, b) => new Date(a.item.dueAt).getTime() - new Date(b.item.dueAt).getTime())
+      .slice(0, 3);
+  }, [announcementsQuery.data, completedDeadlinesQuery.data, user]);
 
   const cards = [
     { label: "Total tichete", value: tickets.length, tone: "bg-brand-100 text-brand-900" },
@@ -37,6 +66,43 @@ export function DashboardPage() {
         title={`Bine ai venit, ${user?.name || "coleg"}`}
         subtitle="Monitorizeaza solicitarile si interactioneaza cu asistentul AI intern."
       />
+
+      {upcomingDeadlines.length ? (
+        <Card className="border-2 border-amber-300 bg-gradient-to-br from-amber-50 to-rose-50 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-amber-500 text-sm font-bold text-white">
+                !
+              </span>
+              <h3 className="text-base font-semibold text-amber-900">
+                Termene apropiate pentru tine
+              </h3>
+            </div>
+            <Link
+              to="/deadlines"
+              className="text-sm font-medium text-amber-800 underline hover:text-amber-900"
+            >
+              Vezi toate
+            </Link>
+          </div>
+          <ul className="mt-3 space-y-2">
+            {upcomingDeadlines.map(({ item, info }) => (
+              <li
+                key={item.id}
+                className="flex flex-col gap-1 rounded-xl border border-amber-200 bg-white p-3 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="min-w-0">
+                  <p className="font-semibold text-slate-900">{item.title}</p>
+                  <p className="text-xs text-slate-500">
+                    Scadent: {formatDateTime(item.dueAt)}
+                  </p>
+                </div>
+                <Badge variant={info.variant}>{info.label}</Badge>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      ) : null}
 
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {cards.map((card) => (

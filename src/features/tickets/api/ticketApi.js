@@ -45,6 +45,7 @@ export async function createTicket(ticketData) {
       source: ticketData.source || "manual",
       user_id: user?.id || null,
       requesterName: user?.name || user?.username || "Angajat",
+      chat_history: ticketData.chatHistory || null,
     }])
     .select();
 

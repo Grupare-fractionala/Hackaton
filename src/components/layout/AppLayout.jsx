@@ -4,15 +4,25 @@ import { Button } from "@/components/ui/Button";
 import { cn } from "@/utils/cn";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
+import {
+  useAnnouncementsQuery,
+  useCompletedDeadlinesQuery,
+} from "@/features/announcements/hooks/useAnnouncements";
+import {
+  getDeadlineInfo,
+  isRelevantForUser,
+} from "@/features/announcements/utils/helpers";
 
 const BASE_LINKS = [
   { to: "/", label: "Dashboard", end: true },
   { to: "/chat", label: "Chat AI" },
   { to: "/tickets", label: "Tichete" },
   { to: "/announcements", label: "Anunturi" },
+  { to: "/deadlines", label: "Termene", urgentBadge: true },
 ];
 
 const ADMIN_LINKS = [
+  { to: "/admin/dashboard", label: "Dashboard" },
   { to: "/admin/tickets", label: "Toate tichetele" },
   { to: "/admin/users", label: "Utilizatori" },
   { to: "/documents", label: "Documente" },
@@ -28,6 +38,20 @@ export function AppLayout() {
 
   const links = BASE_LINKS;
   const adminLinks = currentUser?.isAdmin ? ADMIN_LINKS : [];
+
+  const announcementsQuery = useAnnouncementsQuery();
+  const completedDeadlinesQuery = useCompletedDeadlinesQuery();
+  const urgentDeadlineCount = useMemo(() => {
+    const items = announcementsQuery.data || [];
+    const completed = new Set(completedDeadlinesQuery.data || []);
+    return items.filter((item) => {
+      if (item.type !== "deadline") return false;
+      if (completed.has(item.id)) return false;
+      if (!isRelevantForUser(item, currentUser)) return false;
+      const info = getDeadlineInfo(item);
+      return info.urgency === "overdue" || info.urgency === "critical" || info.urgency === "soon";
+    }).length;
+  }, [announcementsQuery.data, completedDeadlinesQuery.data, currentUser]);
 
   const initials = useMemo(() => {
     if (!user?.name) {
@@ -101,14 +125,19 @@ export function AppLayout() {
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={({ isActive }) =>
                   cn(
-                    "block rounded-xl px-3 py-2 text-sm font-medium transition",
+                    "flex items-center justify-between rounded-xl px-3 py-2 text-sm font-medium transition",
                     isActive
                       ? "bg-brand-100 text-brand-800"
                       : "text-slate-700 hover:bg-white hover:text-slate-900",
                   )
                 }
               >
-                {link.label}
+                <span>{link.label}</span>
+                {link.urgentBadge && urgentDeadlineCount > 0 ? (
+                  <span className="ml-2 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-rose-500 px-1.5 text-xs font-bold text-white">
+                    {urgentDeadlineCount}
+                  </span>
+                ) : null}
               </NavLink>
             ))}
 

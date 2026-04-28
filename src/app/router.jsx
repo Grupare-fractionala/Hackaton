@@ -1,10 +1,12 @@
 import { createBrowserRouter, redirect } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { ProtectedRoute } from "@/features/auth/components/ProtectedRoute";
+import { AdminDashboardPage } from "@/pages/AdminDashboardPage";
 import { AdminPage } from "@/pages/AdminPage";
 import { AdminTicketsPage } from "@/pages/AdminTicketsPage";
 import { AnnouncementsPage } from "@/pages/AnnouncementsPage";
 import { ChatPage } from "@/pages/ChatPage";
+import { DeadlinesPage } from "@/pages/DeadlinesPage";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { KnowledgePage } from "@/pages/KnowledgePage";
 import { LoginPage } from "@/pages/LoginPage";
@@ -70,6 +72,14 @@ export const router = createBrowserRouter(
           element: <AnnouncementsPage />,
         },
         {
+          path: "deadlines",
+          element: <DeadlinesPage />,
+        },
+        {
+          path: "termene",
+          element: <DeadlinesPage />,
+        },
+        {
           path: "tickets/new",
           element: <NewTicketPage />,
         },
@@ -80,6 +90,10 @@ export const router = createBrowserRouter(
         {
           path: "knowledge",
           element: <KnowledgePage />,
+        },
+        {
+          path: "admin/dashboard",
+          element: <AdminDashboardPage />,
         },
         {
           path: "admin/users",

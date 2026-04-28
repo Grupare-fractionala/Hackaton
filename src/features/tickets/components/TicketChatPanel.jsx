@@ -8,6 +8,30 @@ import { useTicketMessagesQuery, useSendTicketMessageMutation } from "@/features
 import { formatDateTime, formatTicketId } from "@/utils/date";
 import { cn } from "@/utils/cn";
 
+function ChatHistorySection({ history }) {
+  const [expanded, setExpanded] = useState(false);
+
+  if (!history) return null;
+
+  return (
+    <div className="mx-4 mt-4 rounded-xl border border-amber-200 bg-amber-50/60 p-3">
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        className="flex w-full items-center justify-between text-left text-sm font-semibold text-amber-900"
+      >
+        <span>Istoric conversatie AI ({expanded ? "ascunde" : "arata"})</span>
+        <span className="text-xs">{expanded ? "▲" : "▼"}</span>
+      </button>
+      {expanded ? (
+        <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap break-words text-xs leading-relaxed text-slate-700">
+          {history}
+        </pre>
+      ) : null}
+    </div>
+  );
+}
+
 function statusVariant(status) {
   if (status === "Rezolvat") return "success";
   if (status === "In lucru") return "warning";
@@ -81,6 +105,10 @@ export function TicketChatPanel({ ticket, onClose }) {
             ✕
           </Button>
         </header>
+
+        {ticket.chat_history && ticket.user_id !== user?.id ? (
+          <ChatHistorySection history={ticket.chat_history} />
+        ) : null}
 
         <div className="flex-1 overflow-y-auto space-y-3 bg-slate-50/60 p-4">
           {messagesQuery.isLoading ? (
