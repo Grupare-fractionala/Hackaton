@@ -7,11 +7,16 @@ import { useAuthStore } from "@/store/useAuthStore";
 async function buildUserSession(supabaseUser) {
   if (!supabaseUser) return { user: null, token: null };
 
-  const { data: profile } = await supabase
+  const { data: profile, error } = await supabase
     .from("profiles")
     .select("*")
     .eq("id", supabaseUser.id)
     .single();
+
+  if (error) {
+    console.warn("[auth] Failed to fetch profile, keeping existing session:", error);
+    return null;
+  }
 
   if (!profile) return { user: null, token: null };
 
@@ -46,12 +51,12 @@ export function AppProviders({ children }) {
 
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       const sessionData = await buildUserSession(session?.user ?? null);
-      setSession(sessionData);
+      if (sessionData !== null) setSession(sessionData);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       const sessionData = await buildUserSession(session?.user ?? null);
-      setSession(sessionData);
+      if (sessionData !== null) setSession(sessionData);
     });
 
     return () => subscription.unsubscribe();

@@ -8,27 +8,104 @@ import { useTicketMessagesQuery, useSendTicketMessageMutation } from "@/features
 import { formatDateTime, formatTicketId } from "@/utils/date";
 import { cn } from "@/utils/cn";
 
-function ChatHistorySection({ history }) {
-  const [expanded, setExpanded] = useState(false);
+function parseChatHistory(history) {
+  if (!history) return [];
 
-  if (!history) return null;
+  const lines = history.split("\n");
+  const turns = [];
+  let current = null;
+
+  for (const raw of lines) {
+    if (raw.startsWith("[Istoric") || raw.trim() === "" || raw.trim() === "---") {
+      if (current) {
+        turns.push(current);
+        current = null;
+      }
+      continue;
+    }
+
+    const userMatch = raw.match(/^Utilizator:\s?(.*)$/);
+    const aiMatch = raw.match(/^Asistent AI:\s?(.*)$/);
+
+    if (userMatch) {
+      if (current) turns.push(current);
+      current = { role: "user", content: userMatch[1] };
+    } else if (aiMatch) {
+      if (current) turns.push(current);
+      current = { role: "ai", content: aiMatch[1] };
+    } else if (current) {
+      current.content += `\n${raw}`;
+    }
+  }
+
+  if (current) turns.push(current);
+  return turns;
+}
+
+function ChatHistoryModal({ history, onClose }) {
+  const turns = parseChatHistory(history);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [onClose]);
 
   return (
-    <div className="mx-4 mt-4 rounded-xl border border-amber-200 bg-amber-50/60 p-3">
-      <button
-        type="button"
-        onClick={() => setExpanded((v) => !v)}
-        className="flex w-full items-center justify-between text-left text-sm font-semibold text-amber-900"
-      >
-        <span>Istoric conversatie AI ({expanded ? "ascunde" : "arata"})</span>
-        <span className="text-xs">{expanded ? "▲" : "▼"}</span>
-      </button>
-      {expanded ? (
-        <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap break-words text-xs leading-relaxed text-slate-700">
-          {history}
-        </pre>
-      ) : null}
-    </div>
+    <>
+      <div
+        className="fixed inset-0 z-[60] bg-slate-900/50 backdrop-blur-sm"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      <div className="fixed left-1/2 top-1/2 z-[70] flex max-h-[85vh] w-[min(40rem,92vw)] -translate-x-1/2 -translate-y-1/2 flex-col rounded-2xl bg-white shadow-2xl">
+        <header className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+          <div>
+            <h3 className="text-base font-semibold text-slate-900">Istoric conversatie AI</h3>
+            <p className="text-xs text-slate-500">
+              Conversatia originala dintre solicitant si asistentul AI.
+            </p>
+          </div>
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            ✕
+          </Button>
+        </header>
+
+        <div className="flex-1 space-y-3 overflow-y-auto bg-slate-50/60 p-4">
+          {turns.length === 0 ? (
+            <p className="text-center text-sm text-slate-400">Conversatia este goala.</p>
+          ) : (
+            turns.map((turn, idx) => {
+              const isUser = turn.role === "user";
+              return (
+                <div
+                  key={idx}
+                  className={cn("flex", isUser ? "justify-end" : "justify-start")}
+                >
+                  <div
+                    className={cn(
+                      "max-w-[85%] rounded-2xl px-3 py-2 text-sm shadow-sm",
+                      isUser
+                        ? "rounded-br-md bg-brand-600 text-white"
+                        : "rounded-bl-md border border-slate-200 bg-white text-slate-800",
+                    )}
+                  >
+                    <p className="mb-1 text-[11px] font-semibold opacity-80">
+                      {isUser ? "Solicitant" : "Asistent AI"}
+                    </p>
+                    <p className="whitespace-pre-wrap break-words leading-relaxed">
+                      {turn.content}
+                    </p>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -41,7 +118,11 @@ function statusVariant(status) {
 export function TicketChatPanel({ ticket, onClose }) {
   const user = useCurrentUser();
   const [draft, setDraft] = useState("");
+  const [historyOpen, setHistoryOpen] = useState(false);
   const messagesEndRef = useRef(null);
+
+  const canViewChatHistory =
+    Boolean(ticket?.chat_history) && ticket?.user_id !== user?.id;
 
   const messagesQuery = useTicketMessagesQuery(ticket?.id);
   const sendMutation = useSendTicketMessageMutation(ticket?.id);
@@ -106,8 +187,17 @@ export function TicketChatPanel({ ticket, onClose }) {
           </Button>
         </header>
 
-        {ticket.chat_history && ticket.user_id !== user?.id ? (
-          <ChatHistorySection history={ticket.chat_history} />
+        {canViewChatHistory ? (
+          <div className="border-b border-slate-200 bg-amber-50/40 px-4 py-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setHistoryOpen(true)}
+              className="w-full border-amber-300 bg-amber-100 text-amber-900 hover:bg-amber-200"
+            >
+              🤖 Vezi istoricul conversatiei AI
+            </Button>
+          </div>
         ) : null}
 
         <div className="flex-1 overflow-y-auto space-y-3 bg-slate-50/60 p-4">
@@ -169,6 +259,13 @@ export function TicketChatPanel({ ticket, onClose }) {
           </div>
         </form>
       </aside>
+
+      {historyOpen && canViewChatHistory ? (
+        <ChatHistoryModal
+          history={ticket.chat_history}
+          onClose={() => setHistoryOpen(false)}
+        />
+      ) : null}
     </>
   );
 }

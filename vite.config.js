@@ -29,6 +29,7 @@ export default defineConfig({
     },
   },
   server: {
+    allowedHosts: [".ngrok-free.dev", ".ngrok-free.app", ".ngrok.io", ".ngrok.app"],
     proxy: {
       "/flowise": {
         target: "http://localhost:3000",
