@@ -1,6 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { uploadDocument } from "@/features/documents/documentApi";
-import { supabase } from "@/supabaseClient";
+import { createDocument, getDocuments } from "@/features/documents/api/documentApi";
 
 export function DocumentUploadPanel() {
   const [isDragging, setIsDragging] = useState(false);
@@ -11,14 +10,9 @@ export function DocumentUploadPanel() {
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    async function fetchDocuments() {
-      const { data, error } = await supabase
-        .from("documents")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (!error && data) setDocuments(data);
-    }
-    fetchDocuments();
+    getDocuments()
+      .then(setDocuments)
+      .catch(() => {});
   }, []);
 
   const handleFiles = useCallback(
@@ -28,17 +22,9 @@ export function DocumentUploadPanel() {
       setIsUploading(true);
       setUploadError(null);
       try {
-        const success = await uploadDocument(file, department);
-        if (!success) {
-          setUploadError("Upload failed. Please try again.");
-        } else {
-          // Refresh list from DB to get the new document with its id
-          const { data } = await supabase
-            .from("documents")
-            .select("*")
-            .order("created_at", { ascending: false });
-          if (data) setDocuments(data);
-        }
+        await createDocument(file, department);
+        const data = await getDocuments();
+        setDocuments(data);
       } catch (err) {
         setUploadError(err.message || "Upload failed");
       } finally {

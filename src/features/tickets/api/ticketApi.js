@@ -98,7 +98,6 @@ export async function respondToTicket(payload) {
     return respondToMockTicket(payload);
   }
 
-  // Try to update in Supabase
   try {
     let status = "Deschis";
     if (payload.action === "take") status = "In lucru";

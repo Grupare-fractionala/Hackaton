@@ -19,7 +19,6 @@ export function RegisterForm() {
     event.preventDefault();
 
     if (form.password !== form.confirmPassword) {
-      // This is a simple validation, we could use a better way but for now it's okay.
       return;
     }
 
