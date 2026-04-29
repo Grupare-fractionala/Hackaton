@@ -76,6 +76,22 @@ row), but `createDocument` throws so the UI surfaces the embedding failure inste
 the file is searchable. Empty `document_vectors` after a successful upload almost always means
 either the chatflow ID env var is unset or Flowise's loader is misconfigured.
 
+#### Backfilling existing documents
+
+If `document_vectors` is empty but Storage and the `documents` table already have rows
+(e.g. uploads from before the auto-upsert wiring), run:
+
+```bash
+node scripts/backfill-vectors.mjs
+```
+
+The script reads every row in `documents`, downloads the matching file from the
+`company_documents` Storage bucket using the service role key, and POSTs it to the same
+Flowise upsert endpoint the frontend uses — applying the exact same `FLOWISE_UPSERT_TARGETS`
+mapping. Tehnic / General rows are skipped by design. Requires `VITE_SUPABASE_URL`,
+`SUPABASE_SERVICE_ROLE_KEY`, `VITE_FLOWISE_BASE_URL`, the HR/Juridic chatflow IDs, and
+optionally `VITE_FLOWISE_API_KEY` in `.env`.
+
 ### Data layer (Supabase)
 
 | Table | Purpose |
@@ -265,6 +281,7 @@ Hackaton/
 │   ├── create-admin.mjs            # creates admin@primarie.local + profile via service role
 │   ├── seed-demo-users.mjs         # creates the demo accounts listed above
 │   ├── create-ticket-messages.mjs  # ensures the ticket_messages table is provisioned
+│   ├── backfill-vectors.mjs        # re-embeds every existing HR / Administrativ document into document_vectors
 │   └── prepare-pages.mjs           # post-build step for GitHub Pages
 │
 └── .github/workflows/deploy-pages.yml
